@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="referrer" content="no-referrer"><title>BM FUEL · Live Meter Camera</title>
+<meta name="referrer" content="no-referrer"><title>BM FUEL · Free OCR Meter Camera</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
 <style>
 :root{color-scheme:dark;--o:#ff981f;--b:#12171e;--c:#202832;--t:#eef4fa}
 *{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font:16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
@@ -16,24 +17,24 @@ video{width:100%;height:auto;max-height:66vh;object-fit:contain;display:block}
 #shot{max-width:100%;width:100%;height:auto;display:none}button{border:0;border-radius:11px;background:var(--o);color:#17202b;padding:14px 18px;font-size:17px;font-weight:800;cursor:pointer}
 button.secondary{background:#3b4655;color:#fff}button:disabled{opacity:.45;cursor:default}
 .controls{display:flex;gap:10px;margin-top:15px}.controls button{flex:1}#retake,#send{display:none}
-#status{background:var(--c);border-radius:12px;padding:14px;margin:18px 0 0;min-height:56px}small{color:#a9bac9;display:block;margin-top:12px}
+#ocrResult{background:#122e2b;color:#e4fff5;padding:14px;margin-top:12px;border:1px solid #407666;border-radius:10px;display:none}#ocrResult strong{font-size:27px;color:#9df9cf}#status{background:var(--c);border-radius:12px;padding:14px;margin:18px 0 0;min-height:56px}small{color:#a9bac9;display:block;margin-top:12px}
 </style>
 </head>
 <body><main>
-<header><span class="logo">⛽ BM FUEL</span><span class="sub">LIVE CAMERA · NO GALLERY</span></header>
+<header><span class="logo">⛽ BM FUEL</span><span class="sub">LIVE CAMERA · FREE OCR · NO GALLERY</span></header>
 <h1>ถ่ายภาพมิเตอร์ / ຖ່າຍຮູບມິເຕີ</h1>
 <p>ใช้กล้องหลังของโทรศัพท์และเล็งเฉพาะ <strong>ตัวเลขจำนวนลิตรสะสม</strong> ให้ชัดเจน ไม่ใช่ราคาน้ำมันหรือยอดเงิน</p>
-<p class="stage">ขั้นตอน: ถ่าย → ตรวจภาพ → ยืนยันส่งให้ระบบ OCR</p>
+<p class="stage">ขั้นตอน: ถ่าย → อ่านเลข OCR ฟรี → ตรวจเลข → ส่งกลับ BM FUEL</p>
 <div class="preview"><video id="video" autoplay playsinline muted></video><div class="guide" id="guide"></div><canvas id="shot"></canvas></div>
-<div class="controls"><button id="capture" type="button" disabled>📷 ถ่ายภาพ</button><button id="retake" class="secondary" type="button">ถ่ายใหม่</button><button id="send" type="button">✓ ใช้ภาพนี้</button></div>
-<div id="status" role="status" aria-live="polite">กำลังขอสิทธิ์กล้อง...</div>
-<small>รูปจะส่งกลับไปยัง BM FUEL Management ที่เปิดหน้ากล้องนี้เท่านั้น หน้าเว็บกล้องไม่มีปุ่มเลือกรูปหรือไฟล์จากเครื่อง</small>
+<div class="controls"><button id="capture" type="button" disabled>📷 ถ่ายภาพ</button><button id="retake" class="secondary" type="button">ถ่ายใหม่</button><button id="send" type="button">🔎 อ่านเลขฟรี</button><button id="confirm" type="button" style="display:none">✓ ยืนยันเลขและส่ง</button></div>
+<div id="ocrResult" aria-live="polite"></div><div id="status" role="status" aria-live="polite">กำลังขอสิทธิ์กล้อง...</div>
+<small>OCR ฟรีทำงานบนโทรศัพท์ด้วย Tesseract.js (ไม่ต้องใช้ Google Cloud / API key / Billing) · ต้องมีอินเทอร์เน็ตครั้งแรกเพื่อโหลดโมเดล OCR · หากอ่านผิดให้ถ่ายใหม่ · รูปจะส่งให้ระบบ BM FUEL ที่เปิดหน้านี้เท่านั้น</small>
 </main>
 <script>
 (()=>{'use strict';
 const $=x=>document.getElementById(x),p=new URLSearchParams(location.hash.slice(1));
 const captureId=p.get('captureId')||'',returnOrigin=p.get('returnOrigin')||'';
-let stream=null,encoded=null;
+let stream=null,encoded=null,ocrText="",ocrConfidence=0,ocrValue=null,busy=false;
 function status(m){$('status').textContent=m;}
 function closeStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
 async function start(){
@@ -54,20 +55,84 @@ $('capture').addEventListener('click',()=>{
   c.getContext('2d',{alpha:false}).drawImage(v,sourceX,sourceY,cropW,cropH,0,0,c.width,c.height);
   encoded=c.toDataURL('image/jpeg',.85);
   $('video').style.display='none';$('guide').style.display='none';c.style.display='block';
-  $('capture').style.display='none';$('retake').style.display='block';$('send').style.display='block';
-  status('ตรวจสอบภาพ: มองเห็นตัวเลขลิตรครบและชัดหรือไม่? ถ้าไม่ชัดให้กดถ่ายใหม่');
+  $('capture').style.display='none';$('retake').style.display='block';$('send').style.display='block';$('send').disabled=false;
+  $('confirm').style.display='none';$('ocrResult').style.display='none';
+  ocrText='';ocrConfidence=0;ocrValue=null;
+  status('ตรวจภาพก่อน: ให้เห็นเฉพาะตัวเลขสะสมลิตรในกรอบ ถ้าชัดแล้วกดอ่านเลขฟรี');
 });
 $('retake').addEventListener('click',()=>{
-  encoded=null;$('shot').style.display='none';$('video').style.display='block';$('guide').style.display='block';
-  $('capture').style.display='block';$('retake').style.display='none';$('send').style.display='none';status('เล็งให้ชัดแล้วกดถ่ายอีกครั้ง');
+  if(busy)return;
+  encoded=null;ocrText='';ocrConfidence=0;ocrValue=null;
+  $('shot').style.display='none';$('video').style.display='block';$('guide').style.display='block';
+  $('capture').style.display='block';$('retake').style.display='none';$('send').style.display='none';$('confirm').style.display='none';
+  $('ocrResult').style.display='none';status('เล็งให้ชัดแล้วกดถ่ายอีกครั้ง');
 });
-$('send').addEventListener('click',()=>{
- if(!encoded||!window.opener)return;
- $('send').disabled=true;closeStream();
- try{window.opener.postMessage({type:'BM_METER_CAMERA_IMAGE',captureId:captureId,imageData:encoded},returnOrigin);
-   status('ส่งภาพกลับไปยัง BM FUEL แล้ว สามารถกลับไปหน้าระบบได้');
-   setTimeout(()=>window.close(),700);
- }catch(e){status('ไม่สามารถส่งภาพกลับได้: '+e.message);$('send').disabled=false;}
+// A meter crop must yield one and only one numeric reading.
+function singleValue(text){
+  const lines=String(text||'').split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean),values=[];
+  for(const line of lines){
+    const clean=line.replace(/(?<=\d)[Oo](?=\d)/g,'0').replace(/(?<=\d),(?=\d{1,3}(?:\D|$))/g,'.');
+    const hits=clean.match(/\d{1,9}(?:\.\d{1,3})?/g)||[];
+    for(const raw of hits){const n=Number(raw);
+      if(!Number.isFinite(n)||n<0||n>1000000000||Math.abs(n*1000-Math.round(n*1000))>0.00001)
+        throw new Error('จำนวนหลักผิดปกติ กรุณาถ่ายใหม่');
+      values.push(Math.round(n*1000)/1000);
+    }
+  }
+  const different=[...new Set(values)];
+  if(different.length!==1)throw new Error('OCR อ่านได้ไม่ชัดหรือเห็นหลายตัวเลข กรุณาถ่ายใหม่โดยให้เห็นเฉพาะเลขลิตรสะสม');
+  return different[0];
+}
+async function recognizeLocal(){
+  if(!window.Tesseract||!window.Tesseract.createWorker)throw new Error('โหลด OCR ไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ตแล้วเปิดหน้าใหม่');
+  let worker=null;
+  try{
+    worker=await Tesseract.createWorker('eng',1,{
+      logger:m=>{if(m.status==='recognizing text'&&Number.isFinite(m.progress))status('กำลังอ่านตัวเลขฟรี '+Math.round(m.progress*100)+'%');}
+    });
+    await worker.setParameters({tessedit_char_whitelist:'0123456789.,',tessedit_pageseg_mode:'7',user_defined_dpi:'300'});
+    // Grayscale + contrast upscale aids recognition of digital dispenser displays.
+    const original=$('shot'),w=original.width,h=original.height,scale=Math.min(3,Math.max(1,1100/Math.max(w,1)));
+    const processed=document.createElement('canvas');processed.width=Math.round(w*scale);processed.height=Math.round(h*scale);
+    const ctx=processed.getContext('2d',{willReadFrequently:true});ctx.drawImage(original,0,0,processed.width,processed.height);
+    const pixels=ctx.getImageData(0,0,processed.width,processed.height);
+    for(let i=0;i<pixels.data.length;i+=4){
+      const gray=.299*pixels.data[i]+.587*pixels.data[i+1]+.114*pixels.data[i+2];
+      const level=Math.max(0,Math.min(255,(gray-128)*1.35+128));
+      pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=level;
+    }
+    ctx.putImageData(pixels,0,0);
+    const r=await worker.recognize(processed);
+    return {text:String(r.data.text||'').trim(),confidence:Number(r.data.confidence)||0};
+  }finally{if(worker)await worker.terminate().catch(()=>{});}
+}
+$('send').addEventListener('click',async()=>{
+  if(!encoded||busy||!window.opener)return;
+  busy=true;$('send').disabled=true;$('retake').disabled=true;
+  status('กำลังโหลด OCR ฟรีและอ่านตัวเลข โปรดเปิดหน้านี้ไว้...');
+  try{
+    const r=await recognizeLocal();
+    const value=singleValue(r.text);
+    if(r.confidence<35)throw new Error('ความมั่นใจ OCR ต่ำ ('+Math.round(r.confidence)+'%) กรุณาถ่ายภาพใหม่ให้ชัด');
+    ocrText=r.text;ocrConfidence=r.confidence;ocrValue=value;
+    $('ocrResult').replaceChildren();
+    $('ocrResult').append('เลขมิเตอร์ที่ OCR อ่านได้: ');
+    const strong=document.createElement('strong');strong.textContent=String(value)+' ลิตร';$('ocrResult').append(strong);
+    $('ocrResult').style.display='block';
+    $('send').style.display='none';$('confirm').style.display='block';
+    status('ตรวจเลขที่อ่านได้กับภาพด้านบน ถ้าถูกต้องกดยืนยัน ถ้าผิดให้กดถ่ายใหม่');
+  }catch(e){status('อ่านตัวเลขไม่สำเร็จ: '+(e&&e.message||String(e))+' — กรุณากดถ่ายใหม่');}
+  finally{busy=false;$('retake').disabled=false;$('send').disabled=false;}
+});
+$('confirm').addEventListener('click',()=>{
+  if(busy||!encoded||!window.opener||!Number.isFinite(ocrValue)||!ocrText)return;
+  $('confirm').disabled=true;closeStream();
+  try{
+    window.opener.postMessage({type:'BM_METER_CAMERA_IMAGE',captureId:captureId,imageData:encoded,
+      ocrText:ocrText,ocrConfidence:ocrConfidence,ocrEngine:'tesseract-browser-v7'},returnOrigin);
+    status('ส่งผล OCR ฟรีและรูปหลักฐานกลับไป BM FUEL แล้ว');
+    setTimeout(()=>window.close(),950);
+  }catch(e){status('ไม่สามารถส่งผลกลับ: '+e.message);$('confirm').disabled=false;}
 });
 window.addEventListener('beforeunload',closeStream);
 start();
