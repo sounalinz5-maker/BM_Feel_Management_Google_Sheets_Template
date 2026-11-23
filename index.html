@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<title>BM FUEL · Camera OCR Free v7.9.7</title>
+<title>BM FUEL · Camera OCR Free v7.9.8</title>
 <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
 <style>
 :root{color-scheme:dark;--orange:#ff981f;--bg:#111820;--card:#1e2935;--text:#f1f6fb;--muted:#c8d5e2;--green:#91eac0;--err:#ffb2a7}
@@ -21,12 +21,12 @@ video{width:100%;max-height:67vh;object-fit:contain;display:block}#guide{positio
 .hint{background:#293542;border:1px solid #435265;color:#e8f3fc;margin:12px 0 0;border-radius:12px;padding:12px;font-size:15px}
 .controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}.controls button{flex:1 1 42%}
 button{border:0;border-radius:12px;background:var(--orange);padding:14px 12px;color:#17202a;font-size:17px;font-weight:800;cursor:pointer}button.secondary{background:#485464;color:white}button:disabled{opacity:.45;cursor:not-allowed}
-#retake,#read,#confirm{display:none}#result{display:none;background:#17322c;border:1px solid #3d8068;border-radius:12px;padding:14px;margin-top:12px}#result strong{display:block;font-size:30px;color:var(--green);font-variant-numeric:tabular-nums}
+#retake,#read,#ai,#confirm{display:none}#result{display:none;background:#17322c;border:1px solid #3d8068;border-radius:12px;padding:14px;margin-top:12px}#result strong{display:block;font-size:30px;color:var(--green);font-variant-numeric:tabular-nums}
 #status{background:var(--card);border-radius:12px;padding:14px;margin:15px 0 0;min-height:54px}small{display:block;margin-top:14px;color:#b7c4d3}
 </style>
 </head>
 <body><main>
-<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.7</span></header>
+<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.8</span></header>
 <h1>ถ่ายภาพมิเตอร์ / ຖ່າຍຮູບມິເຕີ</h1>
 <p>เล็งเฉพาะ <b>ตัวเลขลิตรสะสม</b> ให้ชัด อย่าถ่ายราคาน้ำมันหรือยอดเงินรวม</p>
 <p class="steps">ถ่าย → แตะหรือครอบตัวเลข → อ่านเลขฟรี → ตรวจ → ยืนยัน</p>
@@ -41,11 +41,12 @@ button{border:0;border-radius:12px;background:var(--orange);padding:14px 12px;co
  <button id="capture" disabled type="button">📷 ถ่ายภาพ</button>
  <button class="secondary" id="retake" type="button">↺ ถ่ายใหม่</button>
  <button id="read" type="button">🔎 อ่านเลข OCR ฟรี</button>
+ <button id="ai" type="button">✨ ให้ AI ดูรูปแล้วอ่านเลข</button>
  <button id="confirm" type="button">✓ เลขถูกต้อง — ส่งเข้า BM FUEL</button>
 </div>
 <div id="result" role="status" aria-live="polite"></div>
 <div id="status" role="status" aria-live="polite">กำลังเชื่อมต่อกล้อง...</div>
-<small>OCR ทำงานในเบราว์เซอร์ด้วย Tesseract.js ไม่ต้องมี Google Cloud API Key หรือบัตรเครดิต ต้องใช้อินเทอร์เน็ตโหลดโมเดล OCR ภาพและผลจะส่งกลับไปยัง BM FUEL ที่เปิดหน้ากล้องนี้เท่านั้น เมื่ออ่านผิดให้ปรับกรอบหรือถ่ายใหม่ ห้ามยืนยันค่าที่ไม่ตรงกับมิเตอร์จริง</small>
+<small>OCR ฟรีทำงานในเบราว์เซอร์โดยไม่ต้องผูกบัตร · AI Vision เป็นทางเลือกเมื่อ Owner ตั้ง Gemini API Key ฟรีไว้ใน Script Properties ต้องใช้อินเทอร์เน็ตโหลดโมเดล OCR ภาพและผลจะส่งกลับไปยัง BM FUEL ที่เปิดหน้ากล้องนี้เท่านั้น เมื่ออ่านผิดให้ปรับกรอบหรือถ่ายใหม่ ห้ามยืนยันค่าที่ไม่ตรงกับมิเตอร์จริง</small>
 </main>
 <script>
 (()=>{'use strict';
@@ -53,13 +54,14 @@ const $=id=>document.getElementById(id);
 const hash=new URLSearchParams(location.hash.slice(1));
 const captureId=hash.get('captureId')||'';
 const returnOrigin=hash.get('returnOrigin')||'';
+const enableAI=hash.get('enableAI')==='1';
 let stream=null,encoded='',busy=false,readValue=null,confidence=0;
 let roi={x:0.07,y:0.21,w:0.86,h:0.28};
 function status(msg,error=false){$('status').textContent=msg;$('status').style.color=error?'var(--err)':'';}
 function closeStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
 function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
 function drawSelection(){const r=roi,s=$('selection');s.style.left=(r.x*100)+'%';s.style.top=(r.y*100)+'%';s.style.width=(r.w*100)+'%';s.style.height=(r.h*100)+'%';}
-function hideResult(){readValue=null;confidence=0;$('result').style.display='none';$('confirm').style.display='none';$('read').style.display='block';$('ocrCropWrap').style.display='none';}
+function hideResult(){readValue=null;confidence=0;$('result').style.display='none';$('confirm').style.display='none';$('read').style.display='block';$('ai').style.display=enableAI?'block':'none';$('ocrCropWrap').style.display='none';}
 async function start(){
   if(!window.opener||!captureId||!/^https:\/\//.test(returnOrigin)){
     status('ต้องเข้าจากปุ่มถ่ายมิเตอร์ใน BM FUEL MANAGEMENT เท่านั้น',true);return;
@@ -79,7 +81,7 @@ $('capture').addEventListener('click',()=>{
  c.getContext('2d',{alpha:false}).drawImage(v,cutX,cutY,cutW,cutH,0,0,c.width,c.height);
  encoded=c.toDataURL('image/jpeg',0.86);
  $('video').style.display='none';$('guide').style.display='none';$('photoBox').style.display='block';
- $('capture').style.display='none';$('retake').style.display='block';
+ $('capture').style.display='none';$('retake').style.display='block';$('ai').style.display=enableAI?'block':'none';
  roi={x:0.07,y:0.21,w:0.86,h:0.28};drawSelection();hideResult();
  $('hint').textContent='แตะเลขหนึ่งครั้ง หรือใช้นิ้วลากครอบทั้งแถวเลข เช่น 123456.23 แล้วกดอ่านเลขฟรี (ระบบจะตัดขอบว่างให้อีกชั้น)';
  status('พร้อมอ่านตัวเลข กด OCR ฟรี หรือแตะที่เลขในภาพเพื่อปรับกรอบก่อน');
@@ -115,7 +117,7 @@ $('photoBox').addEventListener('pointercancel',()=>{dragOrigin=null;});
 $('retake').addEventListener('click',()=>{
  if(busy)return;encoded='';
  $('photoBox').style.display='none';$('video').style.display='block';$('guide').style.display='block';
- $('capture').style.display='block';$('retake').style.display='none';$('read').style.display='none';$('confirm').style.display='none';$('result').style.display='none';
+ $('capture').style.display='block';$('retake').style.display='none';$('read').style.display='none';$('ai').style.display='none';$('confirm').style.display='none';$('result').style.display='none';
  $('hint').textContent='หลังถ่ายภาพ แตะตัวเลขหรือลากครอบทั้งแถวตัวเลขเพื่อกำหนดกรอบ OCR';
  status('พร้อมถ่ายใหม่ เล็งเฉพาะตัวเลขลิตร');
 });
@@ -258,10 +260,21 @@ $('read').addEventListener('click',async()=>{
   const t=document.createElement('span');t.textContent='ระบบ OCR อ่านได้:';const b=document.createElement('strong');b.textContent=readValue+' ลิตร';
   const note=document.createElement('span');note.textContent='โปรดตรวจตัวเลขเทียบกับรูปก่อนส่ง (ความมั่นใจ '+Math.round(confidence)+'%)';
   result.append(t,b,note);result.style.display='block';
-  $('read').style.display='none';$('confirm').style.display='block';
+  $('read').style.display='none';$('ai').style.display='none';$('confirm').style.display='block';
   status('ถ้าตัวเลขถูกต้องให้กดยืนยัน ถ้าไม่ถูกให้แตะหรือลากครอบตัวเลขบนรูปเพื่อปรับกรอบ หรือกดถ่ายใหม่');
  }catch(e){status('อ่านเลขไม่สำเร็จ: '+(e?.message||e),true);}
  finally{busy=false;$('read').disabled=false;$('retake').disabled=false;}
+});
+$('ai').addEventListener('click',()=>{
+ if(busy||!encoded||!window.opener)return;
+ if(!window.confirm('ส่งรูปมิเตอร์ให้ Gemini AI วิเคราะห์? ต้องตั้งค่า BM_GEMINI_API_KEY ใน Apps Script ก่อน และรูปจะถูกประมวลผลโดยผู้ให้บริการ AI'))return;
+ busy=true;$('ai').disabled=true;closeStream();
+ try{
+   window.opener.postMessage({type:'BM_METER_CAMERA_IMAGE',captureId,imageData:encoded,
+     ocrText:'',ocrConfidence:null,ocrEngine:'bm-ai-image'},returnOrigin);
+   status('ส่งภาพไปให้ BM FUEL วิเคราะห์ด้วย AI แล้ว กลับไปดูผลที่หน้าแอป');
+   setTimeout(()=>window.close(),950);
+ }catch(e){busy=false;$('ai').disabled=false;status('ส่งรูปไม่ได้: '+String(e),true);}
 });
 $('confirm').addEventListener('click',()=>{
  if(busy||!encoded||!window.opener||!readValue||confidence<35)return;
