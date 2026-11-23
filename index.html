@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<title>BM FUEL · Camera OCR Free v7.9.8</title>
+<title>BM FUEL · Camera OCR Free v7.9.9</title>
 <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
 <style>
 :root{color-scheme:dark;--orange:#ff981f;--bg:#111820;--card:#1e2935;--text:#f1f6fb;--muted:#c8d5e2;--green:#91eac0;--err:#ffb2a7}
@@ -26,7 +26,7 @@ button{border:0;border-radius:12px;background:var(--orange);padding:14px 12px;co
 </style>
 </head>
 <body><main>
-<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.8</span></header>
+<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.9</span></header>
 <h1>ถ่ายภาพมิเตอร์ / ຖ່າຍຮູບມິເຕີ</h1>
 <p>เล็งเฉพาะ <b>ตัวเลขลิตรสะสม</b> ให้ชัด อย่าถ่ายราคาน้ำมันหรือยอดเงินรวม</p>
 <p class="steps">ถ่าย → แตะหรือครอบตัวเลข → อ่านเลขฟรี → ตรวจ → ยืนยัน</p>
@@ -122,11 +122,15 @@ $('retake').addEventListener('click',()=>{
  status('พร้อมถ่ายใหม่ เล็งเฉพาะตัวเลขลิตร');
 });
 function parseMeter(raw){
- const normalized=String(raw||'').replace(/(?<=\d)[Oo](?=\d)/g,'0').replace(/(?<=\d),(?=\d{1,3}(?!\d))/g,'.');
- const hits=normalized.match(/(?<!\d)\d{3,9}(?:\.\d{1,3})?(?!\d)/g)||[];
- const unique=[...new Set(hits.filter(x=>Number.isFinite(+x)&& +x<=1e9))];
- if(unique.length!==1)return null;
- return unique[0];
+ // Pump registers may use a comma instead of the decimal dot: 14234,322 = 14234.322 L.
+ // Strip OCR spacing inside a digit sequence, but never invent any missing digit.
+ let line=String(raw||'').trim().replace(/(?<=\d)[Oo](?=\d)/g,'0')
+   .replace(/(?<=\d)\s*([.,])\s*(?=\d)/g,'$1')
+   .replace(/(?<=\d)[ \u00a0](?=\d)/g,'')
+   .replace(/(?<=\d),(?=\d{1,3}(?!\d))/g,'.');
+ const found=line.match(/(?<!\d)\d{3,9}(?:\.\d{1,3})?(?!\d)/g)||[];
+ const unique=[...new Set(found.filter(x=>/^\d{3,9}(?:\.\d{1,3})?$/.test(x)&&Number.isFinite(Number(x))&&Number(x)<=1e9))];
+ return unique.length===1?unique[0]:null;
 }
 // Analyze the photo pixels INSIDE the orange selection, not the orange border.
 // Detect the dark numeric line (or bright digits on a dark display) and trim empty
@@ -247,7 +251,9 @@ async function readOCR(){
   const winner=rankings[0];
   // Never silently substitute a partial reading if multiple OCR passes disagree.
   if(rankings.length>1&&winner.count<2)throw Error('OCR พบตัวเลขไม่ตรงกัน ('+rankings.map(x=>x.value).join(' / ')+') กรุณาครอบเลขให้แน่นขึ้นหรือถ่ายใหม่');
-  if(winner.count<2&&winner.conf<65)throw Error('OCR ยังไม่มั่นใจ ('+Math.round(winner.conf)+'%) ลองลากกรอบให้ครอบเฉพาะเลขหรือถ่ายใหม่');
+  if(winner.count<2&&winner.conf<35)throw Error('OCR ยังไม่มั่นใจ ('+Math.round(winner.conf)+'%) ลองลากกรอบให้ครอบเฉพาะเลขหรือถ่ายใหม่');
+   // When one pass sees one complete number at >=35% confidence, require explicit human
+   // review at confirmation instead of rejecting the image solely for no second match.
   return {value:winner.value,conf:winner.conf};
  }finally{if(worker){try{await worker.terminate();}catch(_e){}}}
 }
@@ -258,7 +264,7 @@ $('read').addEventListener('click',async()=>{
   const r=await readOCR();readValue=r.value;confidence=r.conf;
   const result=$('result');result.replaceChildren();
   const t=document.createElement('span');t.textContent='ระบบ OCR อ่านได้:';const b=document.createElement('strong');b.textContent=readValue+' ลิตร';
-  const note=document.createElement('span');note.textContent='โปรดตรวจตัวเลขเทียบกับรูปก่อนส่ง (ความมั่นใจ '+Math.round(confidence)+'%)';
+  const note=document.createElement('span');note.textContent='โปรดยืนยันตัวเลขทุกหลัก รวมถึงทศนิยม ก่อนส่ง (ความมั่นใจ '+Math.round(confidence)+'%)';
   result.append(t,b,note);result.style.display='block';
   $('read').style.display='none';$('ai').style.display='none';$('confirm').style.display='block';
   status('ถ้าตัวเลขถูกต้องให้กดยืนยัน ถ้าไม่ถูกให้แตะหรือลากครอบตัวเลขบนรูปเพื่อปรับกรอบ หรือกดถ่ายใหม่');
