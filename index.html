@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<title>BM FUEL · Camera OCR Free v7.9.6</title>
+<title>BM FUEL · Camera OCR Free v7.9.7</title>
 <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
 <style>
 :root{color-scheme:dark;--orange:#ff981f;--bg:#111820;--card:#1e2935;--text:#f1f6fb;--muted:#c8d5e2;--green:#91eac0;--err:#ffb2a7}
@@ -15,7 +15,7 @@ h1{font-size:23px;margin:0 0 12px}p{color:var(--muted);margin:12px 0}.steps{colo
 .preview{position:relative;background:#050609;border:2px solid #45576a;border-radius:16px;overflow:hidden;min-height:190px;display:grid;place-items:center}
 video{width:100%;max-height:67vh;object-fit:contain;display:block}#guide{position:absolute;left:10%;width:80%;top:34%;height:32%;border:3px solid var(--orange);border-radius:9px;pointer-events:none;box-shadow:0 0 0 700px #0006}
 #guide:after{content:'เล็งเฉพาะตัวเลขลิตร';position:absolute;bottom:-28px;left:0;right:0;text-align:center;color:#fff;font-size:12px;text-shadow:0 1px 4px #000}
-#photoBox{position:relative;display:none;width:100%;touch-action:manipulation;cursor:crosshair}
+#photoBox{position:relative;display:none;width:100%;touch-action:none;cursor:crosshair}
 #shot{display:block;width:100%;height:auto}#selection{position:absolute;border:3px solid #ffae36;background:#ffad361a;border-radius:8px;pointer-events:none;box-shadow:0 0 0 900px #0002}
 #selection:after{content:'อ่านเฉพาะกรอบนี้';position:absolute;bottom:-25px;left:0;right:0;text-align:center;color:#fff;font-size:12px;text-shadow:0 1px 3px #000}
 .hint{background:#293542;border:1px solid #435265;color:#e8f3fc;margin:12px 0 0;border-radius:12px;padding:12px;font-size:15px}
@@ -26,16 +26,17 @@ button{border:0;border-radius:12px;background:var(--orange);padding:14px 12px;co
 </style>
 </head>
 <body><main>
-<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.6</span></header>
+<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.7</span></header>
 <h1>ถ่ายภาพมิเตอร์ / ຖ່າຍຮູບມິເຕີ</h1>
 <p>เล็งเฉพาะ <b>ตัวเลขลิตรสะสม</b> ให้ชัด อย่าถ่ายราคาน้ำมันหรือยอดเงินรวม</p>
-<p class="steps">ถ่าย → แตะตรงตัวเลข → อ่านเลขฟรี → ตรวจ → ยืนยัน</p>
+<p class="steps">ถ่าย → แตะหรือครอบตัวเลข → อ่านเลขฟรี → ตรวจ → ยืนยัน</p>
 <div class="preview">
  <video id="video" autoplay playsinline muted></video>
  <div id="guide"></div>
  <div id="photoBox" aria-label="แตะตรงตัวเลขมิเตอร์ในภาพ"><canvas id="shot"></canvas><div id="selection"></div></div>
 </div>
-<div class="hint" id="hint">หลังถ่ายภาพ แตะที่เลขบนภาพเพื่อกำหนดกรอบอ่าน OCR ให้ตรงตัวเลข (ไม่ต้องพิมพ์เอง)</div>
+<div class="hint" id="hint">หลังถ่ายภาพ แตะตรงตัวเลข หรือใช้นิ้วลากครอบทั้งแถวตัวเลข ระบบจะตัดขอบว่างให้อัตโนมัติ (ไม่ต้องพิมพ์เอง)</div>
+<div id="ocrCropWrap" style="display:none;margin-top:12px;padding:10px;background:#26323d;border-radius:10px"><div style="font-size:13px;margin-bottom:6px">🔎 ภาพที่ OCR จะอ่าน (ตัดขอบว่างอัตโนมัติ)</div><canvas id="ocrCrop" style="max-width:100%;width:100%;height:auto;background:white;border-radius:5px"></canvas></div>
 <div class="controls">
  <button id="capture" disabled type="button">📷 ถ่ายภาพ</button>
  <button class="secondary" id="retake" type="button">↺ ถ่ายใหม่</button>
@@ -58,7 +59,7 @@ function status(msg,error=false){$('status').textContent=msg;$('status').style.c
 function closeStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
 function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
 function drawSelection(){const r=roi,s=$('selection');s.style.left=(r.x*100)+'%';s.style.top=(r.y*100)+'%';s.style.width=(r.w*100)+'%';s.style.height=(r.h*100)+'%';}
-function hideResult(){readValue=null;confidence=0;$('result').style.display='none';$('confirm').style.display='none';$('read').style.display='block';}
+function hideResult(){readValue=null;confidence=0;$('result').style.display='none';$('confirm').style.display='none';$('read').style.display='block';$('ocrCropWrap').style.display='none';}
 async function start(){
   if(!window.opener||!captureId||!/^https:\/\//.test(returnOrigin)){
     status('ต้องเข้าจากปุ่มถ่ายมิเตอร์ใน BM FUEL MANAGEMENT เท่านั้น',true);return;
@@ -80,23 +81,42 @@ $('capture').addEventListener('click',()=>{
  $('video').style.display='none';$('guide').style.display='none';$('photoBox').style.display='block';
  $('capture').style.display='none';$('retake').style.display='block';
  roi={x:0.07,y:0.21,w:0.86,h:0.28};drawSelection();hideResult();
- $('hint').textContent='แตะบนภาพตรงกลางตัวเลขลิตร เช่น 123456.23 เพื่อย้ายกรอบสีส้มให้ครอบเฉพาะตัวเลข แล้วกดอ่านเลขฟรี';
+ $('hint').textContent='แตะเลขหนึ่งครั้ง หรือใช้นิ้วลากครอบทั้งแถวเลข เช่น 123456.23 แล้วกดอ่านเลขฟรี (ระบบจะตัดขอบว่างให้อีกชั้น)';
  status('พร้อมอ่านตัวเลข กด OCR ฟรี หรือแตะที่เลขในภาพเพื่อปรับกรอบก่อน');
 });
-$('photoBox').addEventListener('click',e=>{
+// Tap centers a narrower selection; a drag draws an exact selection rectangle.
+// This is local touch interaction, not a gallery picker.
+let dragOrigin=null;
+function pointerRatios(e){
+ const b=$('shot').getBoundingClientRect();
+ return {x:clamp((e.clientX-b.left)/Math.max(b.width,1),0,1), y:clamp((e.clientY-b.top)/Math.max(b.height,1),0,1)};
+}
+$('photoBox').addEventListener('pointerdown',e=>{
  if(busy||!encoded)return;
- const b=$('shot').getBoundingClientRect(),x=clamp((e.clientX-b.left)/b.width,0,1),y=clamp((e.clientY-b.top)/b.height,0,1);
- // Wider horizontally, tight vertically: avoids menus and neighboring meter displays.
- const rw=.72,rh=.23;
- roi={x:clamp(x-rw/2,0,1-rw),y:clamp(y-rh/2,0,1-rh),w:rw,h:rh};
- drawSelection();hideResult();
- status('ปรับกรอบให้ตรงตัวเลขแล้ว กดอ่านเลข OCR ฟรีอีกครั้ง');
+ dragOrigin=pointerRatios(e);
+ try{$('photoBox').setPointerCapture(e.pointerId);}catch(_e){}
 });
+$('photoBox').addEventListener('pointerup',e=>{
+ if(!dragOrigin||busy||!encoded)return;
+ const to=pointerRatios(e),from=dragOrigin;dragOrigin=null;
+ const dx=Math.abs(to.x-from.x),dy=Math.abs(to.y-from.y);
+ if(dx>.06&&dy>.045){
+   const x=Math.min(to.x,from.x),y=Math.min(to.y,from.y);
+   roi={x,y,w:Math.max(.08,dx),h:Math.max(.065,dy)};
+   roi.w=Math.min(roi.w,1-roi.x);roi.h=Math.min(roi.h,1-roi.y);
+ }else{
+   const rw=.51,rh=.27;
+   roi={x:clamp(to.x-rw/2,0,1-rw),y:clamp(to.y-rh/2,0,1-rh),w:rw,h:rh};
+ }
+ drawSelection();hideResult();
+ status('กรอบใหม่พร้อมแล้ว ระบบจะตัดขอบขาวเพิ่มอัตโนมัติเมื่อกดอ่านเลข OCR');
+});
+$('photoBox').addEventListener('pointercancel',()=>{dragOrigin=null;});
 $('retake').addEventListener('click',()=>{
  if(busy)return;encoded='';
  $('photoBox').style.display='none';$('video').style.display='block';$('guide').style.display='block';
  $('capture').style.display='block';$('retake').style.display='none';$('read').style.display='none';$('confirm').style.display='none';$('result').style.display='none';
- $('hint').textContent='หลังถ่ายภาพ แตะที่เลขบนภาพเพื่อกำหนดกรอบ OCR';
+ $('hint').textContent='หลังถ่ายภาพ แตะตัวเลขหรือลากครอบทั้งแถวตัวเลขเพื่อกำหนดกรอบ OCR';
  status('พร้อมถ่ายใหม่ เล็งเฉพาะตัวเลขลิตร');
 });
 function parseMeter(raw){
@@ -106,42 +126,128 @@ function parseMeter(raw){
  if(unique.length!==1)return null;
  return unique[0];
 }
-function roiCanvas(mode='normal'){
- const source=$('shot');let r=roi;
- const sx=Math.max(0,Math.floor(r.x*source.width)),sy=Math.max(0,Math.floor(r.y*source.height));
- const sw=Math.min(source.width-sx,Math.ceil(r.w*source.width)),sh=Math.min(source.height-sy,Math.ceil(r.h*source.height));
- const scale=clamp(1000/Math.max(sw,1),1.5,3),pad=16;
- const out=document.createElement('canvas');out.width=Math.round(sw*scale)+pad*2;out.height=Math.round(sh*scale)+pad*2;
- const ctx=out.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
- ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,sx,sy,sw,sh,pad,pad,out.width-2*pad,out.height-2*pad);
- if(mode!=='normal'){
-   const im=ctx.getImageData(pad,pad,out.width-2*pad,out.height-2*pad),p=im.data;
-   for(let i=0;i<p.length;i+=4){const g=.299*p[i]+.587*p[i+1]+.114*p[i+2];
-     let level=mode==='binary'?(g>155?255:0):clamp((g-128)*1.5+128,0,255);
-     if(mode==='invert')level=255-level;
-     p[i]=p[i+1]=p[i+2]=level;
-   }
-   ctx.putImageData(im,pad,pad);
+// Analyze the photo pixels INSIDE the orange selection, not the orange border.
+// Detect the dark numeric line (or bright digits on a dark display) and trim empty
+// margins automatically. This prevents losing the leading digits of 123456.23.
+function detectMeterBounds(){
+ const src=$('shot'),r=roi;
+ const x0=Math.max(0,Math.floor(r.x*src.width)),y0=Math.max(0,Math.floor(r.y*src.height));
+ const w=Math.min(src.width-x0,Math.max(1,Math.ceil(r.w*src.width)));
+ const h=Math.min(src.height-y0,Math.max(1,Math.ceil(r.h*src.height)));
+ const c=src.getContext('2d',{willReadFrequently:true});
+ const px=c.getImageData(x0,y0,w,h).data;
+ const hist=new Uint32Array(256),lum=new Uint8Array(w*h);
+ for(let k=0,j=0;k<px.length;k+=4,j++){
+   const v=Math.round(.299*px[k]+.587*px[k+1]+.114*px[k+2]);lum[j]=v;hist[v]++;
  }
+ let n=0,median=128;
+ for(let i=0;i<256;i++){n+=hist[i];if(n>=lum.length*.57){median=i;break;}}
+ const darkBg=median<105;
+ const threshold=darkBg?clamp(median+53,75,222):clamp(median-52,62,190);
+ const rows=new Uint32Array(h);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const v=lum[y*w+x];if(darkBg?v>threshold:v<threshold)rows[y]++;
+ }
+ const minRow=Math.max(3,Math.round(w*.012)),maxGap=3;
+ let bands=[],first=-1,last=-1,score=0;
+ for(let y=0;y<h;y++){
+   if(rows[y]>=minRow){
+     if(first>=0&&y-last>maxGap+1){bands.push({a:first,b:last,score});first=-1;score=0;}
+     if(first<0)first=y;
+     last=y;score+=rows[y];
+   }
+ }
+ if(first>=0)bands.push({a:first,b:last,score});
+ bands=bands.filter(b=>b.b-b.a+1>=Math.max(5,h*.04)&&b.b-b.a+1<h*.82);
+ if(!bands.length)return {x:x0,y:y0,w,h,trimmed:false};
+ const band=bands.sort((a,b)=>b.score-a.score)[0];
+ const yA=Math.max(0,band.a-2),yB=Math.min(h,band.b+3);
+ const colCounts=new Uint32Array(w);
+ for(let y=yA;y<yB;y++)for(let x=0;x<w;x++){
+   const v=lum[y*w+x];if(darkBg?v>threshold:v<threshold)colCounts[x]++;
+ }
+ const minCol=Math.max(2,Math.round((band.b-band.a+1)*.07));
+ const active=[];for(let x=0;x<w;x++)if(colCounts[x]>=minCol)active.push(x);
+ if(active.length<4)return {x:x0,y:y0,w,h,trimmed:false};
+ // Separate remote ornaments/vertical lines from the central run of digits.
+ const joinGap=Math.max(12,Math.round((band.b-band.a+1)*1.25));
+ const groups=[];let g={start:active[0],end:active[0],sum:colCounts[active[0]]};
+ for(const x of active.slice(1)){
+   if(x-g.end>joinGap){groups.push(g);g={start:x,end:x,sum:colCounts[x]};}
+   else {g.end=x;g.sum+=colCounts[x];}
+ }
+ groups.push(g);
+ const significant=groups.filter(g=>g.end-g.start+1>=Math.max(12,w*.09));
+ if(!significant.length)return {x:x0,y:y0,w,h,trimmed:false};
+ const best=significant.sort((a,b)=>(b.sum*(b.end-b.start+1))-(a.sum*(a.end-a.start+1)))[0];
+ const pad=Math.round(clamp((band.b-band.a+1)*.30,6,28));
+ const left=Math.max(0,best.start-pad),right=Math.min(w,best.end+pad+1);
+ const top=Math.max(0,band.a-pad),bottom=Math.min(h,band.b+pad+1);
+ return {x:x0+left,y:y0+top,w:right-left,h:bottom-top,trimmed:true};
+}
+function meterCrop(bounds,mode='normal'){
+ const source=$('shot'),sw=bounds.w,sh=bounds.h;
+ // 3x-4x enlargement retains first/last thin digits without clipping.
+ const scale=clamp(1050/Math.max(sw,1),2,4),pad=26;
+ const out=document.createElement('canvas');
+ out.width=Math.max(100,Math.round(sw*scale)+pad*2);
+ out.height=Math.max(50,Math.round(sh*scale)+pad*2);
+ const ctx=out.getContext('2d',{willReadFrequently:true});
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ ctx.drawImage(source,bounds.x,bounds.y,sw,sh,pad,pad,out.width-pad*2,out.height-pad*2);
+ if(mode==='normal')return out;
+ const pixels=ctx.getImageData(pad,pad,out.width-2*pad,out.height-2*pad),data=pixels.data;
+ const invert=mode==='invert';
+ for(let i=0;i<data.length;i+=4){
+   const grey=.299*data[i]+.587*data[i+1]+.114*data[i+2];
+   let g=mode==='binary'?(grey>145?255:0):mode==='contrast'?clamp((grey-128)*1.55+128,0,255):grey;
+   if(invert)g=255-g;
+   data[i]=data[i+1]=data[i+2]=g;
+ }
+ ctx.putImageData(pixels,pad,pad);
  return out;
 }
 async function readOCR(){
- if(!window.Tesseract?.createWorker)throw Error('โหลด Tesseract.js ไม่สำเร็จ กรุณาตรวจการเชื่อมต่ออินเทอร์เน็ตและรีเฟรช');
+ if(!window.Tesseract?.createWorker)throw Error('โหลด Tesseract.js ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้านี้');
+ const bounds=detectMeterBounds();
+ // Show exactly the pixels being recognized, so misaligned crops are visible.
+ const shown=meterCrop(bounds);
+ const display=$('ocrCrop'),ctx=display.getContext('2d');
+ display.width=shown.width;display.height=shown.height;ctx.drawImage(shown,0,0);
+ $('ocrCropWrap').style.display='block';
  let worker=null;
  try{
-  worker=await window.Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text'&&Number.isFinite(m.progress))status('กำลังอ่านเลข OCR ฟรี '+Math.round(m.progress*100)+'%');}});
+  worker=await window.Tesseract.createWorker('eng',1,{logger:m=>{
+   if(m.status==='recognizing text'&&Number.isFinite(m.progress))status('กำลังอ่านตัวเลข '+Math.round(m.progress*100)+'%');
+  }});
   await worker.setParameters({tessedit_char_whitelist:'0123456789.,',tessedit_pageseg_mode:'7',user_defined_dpi:'300'});
-  // Tesseract psm 7 is appropriate for a single numeric line. Avoid unrelated menu text.
-  let notes=[];let best=null;
+  const notes=[],hits=[];
   for(const mode of ['normal','contrast','binary']){
-    const res=await worker.recognize(roiCanvas(mode));
-    const txt=String(res.data?.text||'').trim(),value=parseMeter(txt),conf=Number(res.data?.confidence)||0;
-    notes.push(mode+':'+txt.replace(/\s+/g,' ').slice(0,40));
-    if(value&&conf>=35){if(!best||conf>best.conf)best={value,conf};if(conf>=55)break;}
+    const res=await worker.recognize(meterCrop(bounds,mode));
+    const txt=String(res.data?.text||'').trim();
+    const value=parseMeter(txt),conf=Number(res.data?.confidence)||0;
+    notes.push(mode+':'+txt.replace(/\s+/g,' ').slice(0,30));
+    if(value&&conf>=30)hits.push({value,conf,mode});
+    if(hits.filter(x=>x.value===value).length>=2&&conf>=40)break;
   }
-  if(!best)throw Error('ยังอ่านเลขในกรอบไม่ได้ กรุณาแตะตรงกลางเลขบนภาพอีกครั้ง หรือกดถ่ายใหม่ (ตัวอย่างผล '+notes.join(' / ')+')');
-  return best;
- }finally{if(worker){try{await worker.terminate();}catch(_){}}}
+  // PSM 11 locates sparse text; it often recovers numerals dropped by PSM 7.
+  if(!hits.length||new Set(hits.map(x=>x.value)).size>1){
+    await worker.setParameters({tessedit_pageseg_mode:'11'});
+    const res=await worker.recognize(meterCrop(bounds,'normal'));
+    const txt=String(res.data?.text||'').trim(),value=parseMeter(txt),conf=Number(res.data?.confidence)||0;
+    notes.push('sparse:'+txt.replace(/\s+/g,' ').slice(0,30));
+    if(value&&conf>=30)hits.push({value,conf,mode:'sparse'});
+  }
+  if(!hits.length)throw Error('OCR ไม่พบตัวเลขครบ กรุณาดูภาพที่ระบบตัดด้านบน หรือใช้นิ้วลากกรอบให้แนบกับเลข แล้วอ่านใหม่ ('+notes.join(' / ')+')');
+  const grouped=new Map();for(const h of hits){const xs=grouped.get(h.value)||[];xs.push(h);grouped.set(h.value,xs);}
+  const rankings=[...grouped.entries()].map(([value,arr])=>({value,count:arr.length,conf:Math.max(...arr.map(x=>x.conf))})).sort((a,b)=>b.count-a.count||b.value.replace(/\D/g,'').length-a.value.replace(/\D/g,'').length||b.conf-a.conf);
+  const winner=rankings[0];
+  // Never silently substitute a partial reading if multiple OCR passes disagree.
+  if(rankings.length>1&&winner.count<2)throw Error('OCR พบตัวเลขไม่ตรงกัน ('+rankings.map(x=>x.value).join(' / ')+') กรุณาครอบเลขให้แน่นขึ้นหรือถ่ายใหม่');
+  if(winner.count<2&&winner.conf<65)throw Error('OCR ยังไม่มั่นใจ ('+Math.round(winner.conf)+'%) ลองลากกรอบให้ครอบเฉพาะเลขหรือถ่ายใหม่');
+  return {value:winner.value,conf:winner.conf};
+ }finally{if(worker){try{await worker.terminate();}catch(_e){}}}
 }
 $('read').addEventListener('click',async()=>{
  if(busy||!encoded)return;busy=true;$('read').disabled=true;$('retake').disabled=true;
@@ -153,7 +259,7 @@ $('read').addEventListener('click',async()=>{
   const note=document.createElement('span');note.textContent='โปรดตรวจตัวเลขเทียบกับรูปก่อนส่ง (ความมั่นใจ '+Math.round(confidence)+'%)';
   result.append(t,b,note);result.style.display='block';
   $('read').style.display='none';$('confirm').style.display='block';
-  status('ถ้าตัวเลขถูกต้องให้กดยืนยัน ถ้าไม่ถูกให้แตะตัวเลขบนรูปเพื่อปรับกรอบ หรือกดถ่ายใหม่');
+  status('ถ้าตัวเลขถูกต้องให้กดยืนยัน ถ้าไม่ถูกให้แตะหรือลากครอบตัวเลขบนรูปเพื่อปรับกรอบ หรือกดถ่ายใหม่');
  }catch(e){status('อ่านเลขไม่สำเร็จ: '+(e?.message||e),true);}
  finally{busy=false;$('read').disabled=false;$('retake').disabled=false;}
 });
