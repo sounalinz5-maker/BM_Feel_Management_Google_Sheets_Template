@@ -1,141 +1,175 @@
 <!doctype html>
 <html lang="th">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="referrer" content="no-referrer"><title>BM FUEL · Free OCR Meter Camera</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>BM FUEL · Camera OCR Free v7.9.6</title>
+<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
 <style>
-:root{color-scheme:dark;--o:#ff981f;--b:#12171e;--c:#202832;--t:#eef4fa}
-*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font:16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
-main{max-width:650px;margin:auto;padding:18px 14px 35px}header{display:flex;gap:10px;align-items:center;margin:4px 0 14px}
-.logo{font-size:19px;font-weight:900;color:var(--o)}.sub{color:#b6c4d3;font-size:12px}
-h1{margin:0;font-size:21px}p{color:#d1dce8}.stage{font-weight:700;color:#f7bf79}
-.preview{position:relative;background:#05070a;border:2px solid #415365;border-radius:16px;overflow:hidden;min-height:200px;display:grid;place-items:center}
-video{width:100%;height:auto;max-height:66vh;object-fit:contain;display:block}
-.guide{position:absolute;left:10%;right:10%;top:34%;height:32%;border:3px solid var(--o);border-radius:10px;pointer-events:none;box-shadow:0 0 0 500px #0005}
-.guide:after{content:'จัดตัวเลขลิตรให้อยู่ในกรอบ';position:absolute;bottom:-32px;left:0;right:0;text-align:center;font-size:12px;color:white;text-shadow:0 1px 4px #000}
-#shot{max-width:100%;width:100%;height:auto;display:none}button{border:0;border-radius:11px;background:var(--o);color:#17202b;padding:14px 18px;font-size:17px;font-weight:800;cursor:pointer}
-button.secondary{background:#3b4655;color:#fff}button:disabled{opacity:.45;cursor:default}
-.controls{display:flex;gap:10px;margin-top:15px}.controls button{flex:1}#retake,#send{display:none}
-#ocrResult{background:#122e2b;color:#e4fff5;padding:14px;margin-top:12px;border:1px solid #407666;border-radius:10px;display:none}#ocrResult strong{font-size:27px;color:#9df9cf}#status{background:var(--c);border-radius:12px;padding:14px;margin:18px 0 0;min-height:56px}small{color:#a9bac9;display:block;margin-top:12px}
+:root{color-scheme:dark;--orange:#ff981f;--bg:#111820;--card:#1e2935;--text:#f1f6fb;--muted:#c8d5e2;--green:#91eac0;--err:#ffb2a7}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif}
+main{max-width:700px;margin:auto;padding:16px 14px 32px}header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:14px}
+.brand{color:var(--orange);font-size:20px;font-weight:900}.version{font-size:12px;color:var(--muted);letter-spacing:.2px}
+h1{font-size:23px;margin:0 0 12px}p{color:var(--muted);margin:12px 0}.steps{color:#ffc783;font-weight:750}
+.preview{position:relative;background:#050609;border:2px solid #45576a;border-radius:16px;overflow:hidden;min-height:190px;display:grid;place-items:center}
+video{width:100%;max-height:67vh;object-fit:contain;display:block}#guide{position:absolute;left:10%;width:80%;top:34%;height:32%;border:3px solid var(--orange);border-radius:9px;pointer-events:none;box-shadow:0 0 0 700px #0006}
+#guide:after{content:'เล็งเฉพาะตัวเลขลิตร';position:absolute;bottom:-28px;left:0;right:0;text-align:center;color:#fff;font-size:12px;text-shadow:0 1px 4px #000}
+#photoBox{position:relative;display:none;width:100%;touch-action:manipulation;cursor:crosshair}
+#shot{display:block;width:100%;height:auto}#selection{position:absolute;border:3px solid #ffae36;background:#ffad361a;border-radius:8px;pointer-events:none;box-shadow:0 0 0 900px #0002}
+#selection:after{content:'อ่านเฉพาะกรอบนี้';position:absolute;bottom:-25px;left:0;right:0;text-align:center;color:#fff;font-size:12px;text-shadow:0 1px 3px #000}
+.hint{background:#293542;border:1px solid #435265;color:#e8f3fc;margin:12px 0 0;border-radius:12px;padding:12px;font-size:15px}
+.controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}.controls button{flex:1 1 42%}
+button{border:0;border-radius:12px;background:var(--orange);padding:14px 12px;color:#17202a;font-size:17px;font-weight:800;cursor:pointer}button.secondary{background:#485464;color:white}button:disabled{opacity:.45;cursor:not-allowed}
+#retake,#read,#confirm{display:none}#result{display:none;background:#17322c;border:1px solid #3d8068;border-radius:12px;padding:14px;margin-top:12px}#result strong{display:block;font-size:30px;color:var(--green);font-variant-numeric:tabular-nums}
+#status{background:var(--card);border-radius:12px;padding:14px;margin:15px 0 0;min-height:54px}small{display:block;margin-top:14px;color:#b7c4d3}
 </style>
 </head>
 <body><main>
-<header><span class="logo">⛽ BM FUEL</span><span class="sub">LIVE CAMERA · FREE OCR · NO GALLERY</span></header>
+<header><span class="brand">⛽ BM FUEL</span><span class="version">LIVE CAMERA · FREE OCR · NO GALLERY · v7.9.6</span></header>
 <h1>ถ่ายภาพมิเตอร์ / ຖ່າຍຮູບມິເຕີ</h1>
-<p>ใช้กล้องหลังของโทรศัพท์และเล็งเฉพาะ <strong>ตัวเลขจำนวนลิตรสะสม</strong> ให้ชัดเจน ไม่ใช่ราคาน้ำมันหรือยอดเงิน</p>
-<p class="stage">ขั้นตอน: ถ่าย → อ่านเลข OCR ฟรี → ตรวจเลข → ส่งกลับ BM FUEL</p>
-<div class="preview"><video id="video" autoplay playsinline muted></video><div class="guide" id="guide"></div><canvas id="shot"></canvas></div>
-<div class="controls"><button id="capture" type="button" disabled>📷 ถ่ายภาพ</button><button id="retake" class="secondary" type="button">ถ่ายใหม่</button><button id="send" type="button">🔎 อ่านเลขฟรี</button><button id="confirm" type="button" style="display:none">✓ ยืนยันเลขและส่ง</button></div>
-<div id="ocrResult" aria-live="polite"></div><div id="status" role="status" aria-live="polite">กำลังขอสิทธิ์กล้อง...</div>
-<small>OCR ฟรีทำงานบนโทรศัพท์ด้วย Tesseract.js (ไม่ต้องใช้ Google Cloud / API key / Billing) · ต้องมีอินเทอร์เน็ตครั้งแรกเพื่อโหลดโมเดล OCR · หากอ่านผิดให้ถ่ายใหม่ · รูปจะส่งให้ระบบ BM FUEL ที่เปิดหน้านี้เท่านั้น</small>
+<p>เล็งเฉพาะ <b>ตัวเลขลิตรสะสม</b> ให้ชัด อย่าถ่ายราคาน้ำมันหรือยอดเงินรวม</p>
+<p class="steps">ถ่าย → แตะตรงตัวเลข → อ่านเลขฟรี → ตรวจ → ยืนยัน</p>
+<div class="preview">
+ <video id="video" autoplay playsinline muted></video>
+ <div id="guide"></div>
+ <div id="photoBox" aria-label="แตะตรงตัวเลขมิเตอร์ในภาพ"><canvas id="shot"></canvas><div id="selection"></div></div>
+</div>
+<div class="hint" id="hint">หลังถ่ายภาพ แตะที่เลขบนภาพเพื่อกำหนดกรอบอ่าน OCR ให้ตรงตัวเลข (ไม่ต้องพิมพ์เอง)</div>
+<div class="controls">
+ <button id="capture" disabled type="button">📷 ถ่ายภาพ</button>
+ <button class="secondary" id="retake" type="button">↺ ถ่ายใหม่</button>
+ <button id="read" type="button">🔎 อ่านเลข OCR ฟรี</button>
+ <button id="confirm" type="button">✓ เลขถูกต้อง — ส่งเข้า BM FUEL</button>
+</div>
+<div id="result" role="status" aria-live="polite"></div>
+<div id="status" role="status" aria-live="polite">กำลังเชื่อมต่อกล้อง...</div>
+<small>OCR ทำงานในเบราว์เซอร์ด้วย Tesseract.js ไม่ต้องมี Google Cloud API Key หรือบัตรเครดิต ต้องใช้อินเทอร์เน็ตโหลดโมเดล OCR ภาพและผลจะส่งกลับไปยัง BM FUEL ที่เปิดหน้ากล้องนี้เท่านั้น เมื่ออ่านผิดให้ปรับกรอบหรือถ่ายใหม่ ห้ามยืนยันค่าที่ไม่ตรงกับมิเตอร์จริง</small>
 </main>
 <script>
 (()=>{'use strict';
-const $=x=>document.getElementById(x),p=new URLSearchParams(location.hash.slice(1));
-const captureId=p.get('captureId')||'',returnOrigin=p.get('returnOrigin')||'';
-let stream=null,encoded=null,ocrText="",ocrConfidence=0,ocrValue=null,busy=false;
-function status(m){$('status').textContent=m;}
+const $=id=>document.getElementById(id);
+const hash=new URLSearchParams(location.hash.slice(1));
+const captureId=hash.get('captureId')||'';
+const returnOrigin=hash.get('returnOrigin')||'';
+let stream=null,encoded='',busy=false,readValue=null,confidence=0;
+let roi={x:0.07,y:0.21,w:0.86,h:0.28};
+function status(msg,error=false){$('status').textContent=msg;$('status').style.color=error?'var(--err)':'';}
 function closeStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function drawSelection(){const r=roi,s=$('selection');s.style.left=(r.x*100)+'%';s.style.top=(r.y*100)+'%';s.style.width=(r.w*100)+'%';s.style.height=(r.h*100)+'%';}
+function hideResult(){readValue=null;confidence=0;$('result').style.display='none';$('confirm').style.display='none';$('read').style.display='block';}
 async function start(){
-  if(!window.opener||!/^https:\/\//.test(returnOrigin)||!captureId){status('ต้องเปิดหน้านี้จากปุ่มถ่ายมิเตอร์ใน BM FUEL เท่านั้น');return;}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){status('เบราว์เซอร์นี้ไม่รองรับกล้องสด กรุณาเปิดผ่าน Chrome/Safari บน HTTPS');return;}
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
-  $('video').srcObject=stream;await $('video').play();$('capture').disabled=false;
-  status('กล้องพร้อมใช้งาน จัดตัวเลขไว้ตรงกลางกรอบสีส้มแล้วกดถ่าย');
-  }catch(e){status('เปิดกล้องไม่ได้: '+e.name+' — กรุณาอนุญาตใช้กล้องในเบราว์เซอร์ หรือใช้หน้า HTTPS บนโทรศัพท์');}
+  if(!window.opener||!captureId||!/^https:\/\//.test(returnOrigin)){
+    status('ต้องเข้าจากปุ่มถ่ายมิเตอร์ใน BM FUEL MANAGEMENT เท่านั้น',true);return;
+  }
+  try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('เบราว์เซอร์ไม่รองรับ getUserMedia');
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+    $('video').srcObject=stream;await $('video').play();$('capture').disabled=false;
+    status('กล้องพร้อมแล้ว จัดตัวเลขมิเตอร์ไว้ในกรอบสีส้มแล้วกดถ่าย');
+  }catch(e){status('เปิดกล้องไม่ได้: '+(e?.message||e)+'. โปรดอนุญาตใช้กล้องและเปิดด้วย Chrome/Safari ผ่าน HTTPS',true);}
 }
 $('capture').addEventListener('click',()=>{
-  const v=$('video');if(!stream||!v.videoWidth)return;
-  // Crop centrally to minimize ambiguity from unit price/amount on dispenser.
-  const w=v.videoWidth,h=v.videoHeight,cropW=Math.round(w*.80),cropH=Math.round(h*.32);
-  const sourceX=Math.round((w-cropW)/2),sourceY=Math.round(h*.34);
-  const scale=Math.min(1,1600/cropW),c=$('shot');
-  c.width=Math.round(cropW*scale);c.height=Math.round(cropH*scale);
-  c.getContext('2d',{alpha:false}).drawImage(v,sourceX,sourceY,cropW,cropH,0,0,c.width,c.height);
-  encoded=c.toDataURL('image/jpeg',.85);
-  $('video').style.display='none';$('guide').style.display='none';c.style.display='block';
-  $('capture').style.display='none';$('retake').style.display='block';$('send').style.display='block';$('send').disabled=false;
-  $('confirm').style.display='none';$('ocrResult').style.display='none';
-  ocrText='';ocrConfidence=0;ocrValue=null;
-  status('ตรวจภาพก่อน: ให้เห็นเฉพาะตัวเลขสะสมลิตรในกรอบ ถ้าชัดแล้วกดอ่านเลขฟรี');
+ const v=$('video');if(!stream||!v.videoWidth||busy)return;
+ const w=v.videoWidth,h=v.videoHeight,cutW=Math.round(w*.80),cutH=Math.round(h*.32),cutX=Math.round((w-cutW)/2),cutY=Math.round(h*.34);
+ const factor=Math.min(1,1600/cutW),c=$('shot');
+ c.width=Math.max(1,Math.round(cutW*factor));c.height=Math.max(1,Math.round(cutH*factor));
+ c.getContext('2d',{alpha:false}).drawImage(v,cutX,cutY,cutW,cutH,0,0,c.width,c.height);
+ encoded=c.toDataURL('image/jpeg',0.86);
+ $('video').style.display='none';$('guide').style.display='none';$('photoBox').style.display='block';
+ $('capture').style.display='none';$('retake').style.display='block';
+ roi={x:0.07,y:0.21,w:0.86,h:0.28};drawSelection();hideResult();
+ $('hint').textContent='แตะบนภาพตรงกลางตัวเลขลิตร เช่น 123456.23 เพื่อย้ายกรอบสีส้มให้ครอบเฉพาะตัวเลข แล้วกดอ่านเลขฟรี';
+ status('พร้อมอ่านตัวเลข กด OCR ฟรี หรือแตะที่เลขในภาพเพื่อปรับกรอบก่อน');
+});
+$('photoBox').addEventListener('click',e=>{
+ if(busy||!encoded)return;
+ const b=$('shot').getBoundingClientRect(),x=clamp((e.clientX-b.left)/b.width,0,1),y=clamp((e.clientY-b.top)/b.height,0,1);
+ // Wider horizontally, tight vertically: avoids menus and neighboring meter displays.
+ const rw=.72,rh=.23;
+ roi={x:clamp(x-rw/2,0,1-rw),y:clamp(y-rh/2,0,1-rh),w:rw,h:rh};
+ drawSelection();hideResult();
+ status('ปรับกรอบให้ตรงตัวเลขแล้ว กดอ่านเลข OCR ฟรีอีกครั้ง');
 });
 $('retake').addEventListener('click',()=>{
-  if(busy)return;
-  encoded=null;ocrText='';ocrConfidence=0;ocrValue=null;
-  $('shot').style.display='none';$('video').style.display='block';$('guide').style.display='block';
-  $('capture').style.display='block';$('retake').style.display='none';$('send').style.display='none';$('confirm').style.display='none';
-  $('ocrResult').style.display='none';status('เล็งให้ชัดแล้วกดถ่ายอีกครั้ง');
+ if(busy)return;encoded='';
+ $('photoBox').style.display='none';$('video').style.display='block';$('guide').style.display='block';
+ $('capture').style.display='block';$('retake').style.display='none';$('read').style.display='none';$('confirm').style.display='none';$('result').style.display='none';
+ $('hint').textContent='หลังถ่ายภาพ แตะที่เลขบนภาพเพื่อกำหนดกรอบ OCR';
+ status('พร้อมถ่ายใหม่ เล็งเฉพาะตัวเลขลิตร');
 });
-// A meter crop must yield one and only one numeric reading.
-function singleValue(text){
-  const lines=String(text||'').split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean),values=[];
-  for(const line of lines){
-    const clean=line.replace(/(?<=\d)[Oo](?=\d)/g,'0').replace(/(?<=\d),(?=\d{1,3}(?:\D|$))/g,'.');
-    const hits=clean.match(/\d{1,9}(?:\.\d{1,3})?/g)||[];
-    for(const raw of hits){const n=Number(raw);
-      if(!Number.isFinite(n)||n<0||n>1000000000||Math.abs(n*1000-Math.round(n*1000))>0.00001)
-        throw new Error('จำนวนหลักผิดปกติ กรุณาถ่ายใหม่');
-      values.push(Math.round(n*1000)/1000);
-    }
+function parseMeter(raw){
+ const normalized=String(raw||'').replace(/(?<=\d)[Oo](?=\d)/g,'0').replace(/(?<=\d),(?=\d{1,3}(?!\d))/g,'.');
+ const hits=normalized.match(/(?<!\d)\d{3,9}(?:\.\d{1,3})?(?!\d)/g)||[];
+ const unique=[...new Set(hits.filter(x=>Number.isFinite(+x)&& +x<=1e9))];
+ if(unique.length!==1)return null;
+ return unique[0];
+}
+function roiCanvas(mode='normal'){
+ const source=$('shot');let r=roi;
+ const sx=Math.max(0,Math.floor(r.x*source.width)),sy=Math.max(0,Math.floor(r.y*source.height));
+ const sw=Math.min(source.width-sx,Math.ceil(r.w*source.width)),sh=Math.min(source.height-sy,Math.ceil(r.h*source.height));
+ const scale=clamp(1000/Math.max(sw,1),1.5,3),pad=16;
+ const out=document.createElement('canvas');out.width=Math.round(sw*scale)+pad*2;out.height=Math.round(sh*scale)+pad*2;
+ const ctx=out.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#fff';ctx.fillRect(0,0,out.width,out.height);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(source,sx,sy,sw,sh,pad,pad,out.width-2*pad,out.height-2*pad);
+ if(mode!=='normal'){
+   const im=ctx.getImageData(pad,pad,out.width-2*pad,out.height-2*pad),p=im.data;
+   for(let i=0;i<p.length;i+=4){const g=.299*p[i]+.587*p[i+1]+.114*p[i+2];
+     let level=mode==='binary'?(g>155?255:0):clamp((g-128)*1.5+128,0,255);
+     if(mode==='invert')level=255-level;
+     p[i]=p[i+1]=p[i+2]=level;
+   }
+   ctx.putImageData(im,pad,pad);
+ }
+ return out;
+}
+async function readOCR(){
+ if(!window.Tesseract?.createWorker)throw Error('โหลด Tesseract.js ไม่สำเร็จ กรุณาตรวจการเชื่อมต่ออินเทอร์เน็ตและรีเฟรช');
+ let worker=null;
+ try{
+  worker=await window.Tesseract.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text'&&Number.isFinite(m.progress))status('กำลังอ่านเลข OCR ฟรี '+Math.round(m.progress*100)+'%');}});
+  await worker.setParameters({tessedit_char_whitelist:'0123456789.,',tessedit_pageseg_mode:'7',user_defined_dpi:'300'});
+  // Tesseract psm 7 is appropriate for a single numeric line. Avoid unrelated menu text.
+  let notes=[];let best=null;
+  for(const mode of ['normal','contrast','binary']){
+    const res=await worker.recognize(roiCanvas(mode));
+    const txt=String(res.data?.text||'').trim(),value=parseMeter(txt),conf=Number(res.data?.confidence)||0;
+    notes.push(mode+':'+txt.replace(/\s+/g,' ').slice(0,40));
+    if(value&&conf>=35){if(!best||conf>best.conf)best={value,conf};if(conf>=55)break;}
   }
-  const different=[...new Set(values)];
-  if(different.length!==1)throw new Error('OCR อ่านได้ไม่ชัดหรือเห็นหลายตัวเลข กรุณาถ่ายใหม่โดยให้เห็นเฉพาะเลขลิตรสะสม');
-  return different[0];
+  if(!best)throw Error('ยังอ่านเลขในกรอบไม่ได้ กรุณาแตะตรงกลางเลขบนภาพอีกครั้ง หรือกดถ่ายใหม่ (ตัวอย่างผล '+notes.join(' / ')+')');
+  return best;
+ }finally{if(worker){try{await worker.terminate();}catch(_){}}}
 }
-async function recognizeLocal(){
-  if(!window.Tesseract||!window.Tesseract.createWorker)throw new Error('โหลด OCR ไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ตแล้วเปิดหน้าใหม่');
-  let worker=null;
-  try{
-    worker=await Tesseract.createWorker('eng',1,{
-      logger:m=>{if(m.status==='recognizing text'&&Number.isFinite(m.progress))status('กำลังอ่านตัวเลขฟรี '+Math.round(m.progress*100)+'%');}
-    });
-    await worker.setParameters({tessedit_char_whitelist:'0123456789.,',tessedit_pageseg_mode:'7',user_defined_dpi:'300'});
-    // Grayscale + contrast upscale aids recognition of digital dispenser displays.
-    const original=$('shot'),w=original.width,h=original.height,scale=Math.min(3,Math.max(1,1100/Math.max(w,1)));
-    const processed=document.createElement('canvas');processed.width=Math.round(w*scale);processed.height=Math.round(h*scale);
-    const ctx=processed.getContext('2d',{willReadFrequently:true});ctx.drawImage(original,0,0,processed.width,processed.height);
-    const pixels=ctx.getImageData(0,0,processed.width,processed.height);
-    for(let i=0;i<pixels.data.length;i+=4){
-      const gray=.299*pixels.data[i]+.587*pixels.data[i+1]+.114*pixels.data[i+2];
-      const level=Math.max(0,Math.min(255,(gray-128)*1.35+128));
-      pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=level;
-    }
-    ctx.putImageData(pixels,0,0);
-    const r=await worker.recognize(processed);
-    return {text:String(r.data.text||'').trim(),confidence:Number(r.data.confidence)||0};
-  }finally{if(worker)await worker.terminate().catch(()=>{});}
-}
-$('send').addEventListener('click',async()=>{
-  if(!encoded||busy||!window.opener)return;
-  busy=true;$('send').disabled=true;$('retake').disabled=true;
-  status('กำลังโหลด OCR ฟรีและอ่านตัวเลข โปรดเปิดหน้านี้ไว้...');
-  try{
-    const r=await recognizeLocal();
-    const value=singleValue(r.text);
-    if(r.confidence<35)throw new Error('ความมั่นใจ OCR ต่ำ ('+Math.round(r.confidence)+'%) กรุณาถ่ายภาพใหม่ให้ชัด');
-    ocrText=r.text;ocrConfidence=r.confidence;ocrValue=value;
-    $('ocrResult').replaceChildren();
-    $('ocrResult').append('เลขมิเตอร์ที่ OCR อ่านได้: ');
-    const strong=document.createElement('strong');strong.textContent=String(value)+' ลิตร';$('ocrResult').append(strong);
-    $('ocrResult').style.display='block';
-    $('send').style.display='none';$('confirm').style.display='block';
-    status('ตรวจเลขที่อ่านได้กับภาพด้านบน ถ้าถูกต้องกดยืนยัน ถ้าผิดให้กดถ่ายใหม่');
-  }catch(e){status('อ่านตัวเลขไม่สำเร็จ: '+(e&&e.message||String(e))+' — กรุณากดถ่ายใหม่');}
-  finally{busy=false;$('retake').disabled=false;$('send').disabled=false;}
+$('read').addEventListener('click',async()=>{
+ if(busy||!encoded)return;busy=true;$('read').disabled=true;$('retake').disabled=true;
+ status('กำลังเริ่ม OCR ฟรี อ่านเฉพาะกรอบสีส้ม...');
+ try{
+  const r=await readOCR();readValue=r.value;confidence=r.conf;
+  const result=$('result');result.replaceChildren();
+  const t=document.createElement('span');t.textContent='ระบบ OCR อ่านได้:';const b=document.createElement('strong');b.textContent=readValue+' ลิตร';
+  const note=document.createElement('span');note.textContent='โปรดตรวจตัวเลขเทียบกับรูปก่อนส่ง (ความมั่นใจ '+Math.round(confidence)+'%)';
+  result.append(t,b,note);result.style.display='block';
+  $('read').style.display='none';$('confirm').style.display='block';
+  status('ถ้าตัวเลขถูกต้องให้กดยืนยัน ถ้าไม่ถูกให้แตะตัวเลขบนรูปเพื่อปรับกรอบ หรือกดถ่ายใหม่');
+ }catch(e){status('อ่านเลขไม่สำเร็จ: '+(e?.message||e),true);}
+ finally{busy=false;$('read').disabled=false;$('retake').disabled=false;}
 });
 $('confirm').addEventListener('click',()=>{
-  if(busy||!encoded||!window.opener||!Number.isFinite(ocrValue)||!ocrText)return;
-  $('confirm').disabled=true;closeStream();
-  try{
-    window.opener.postMessage({type:'BM_METER_CAMERA_IMAGE',captureId:captureId,imageData:encoded,
-      ocrText:ocrText,ocrConfidence:ocrConfidence,ocrEngine:'tesseract-browser-v7'},returnOrigin);
-    status('ส่งผล OCR ฟรีและรูปหลักฐานกลับไป BM FUEL แล้ว');
-    setTimeout(()=>window.close(),950);
-  }catch(e){status('ไม่สามารถส่งผลกลับ: '+e.message);$('confirm').disabled=false;}
+ if(busy||!encoded||!window.opener||!readValue||confidence<35)return;
+ $('confirm').disabled=true;closeStream();
+ try{
+   window.opener.postMessage({type:'BM_METER_CAMERA_IMAGE',captureId, imageData:encoded,
+     ocrText:readValue,ocrConfidence:confidence,ocrEngine:'tesseract-browser-v7'},returnOrigin);
+   status('ส่งภาพและผล OCR กลับไป BM FUEL แล้ว กรุณากลับหน้าระบบเพื่อตรวจและบันทึก');
+   setTimeout(()=>window.close(),900);
+ }catch(e){status('ส่งกลับไม่สำเร็จ: '+(e?.message||e),true);$('confirm').disabled=false;}
 });
 window.addEventListener('beforeunload',closeStream);
 start();
 })();
 </script>
-</body></html>
+</body>
+</html>
