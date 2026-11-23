@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer"><title>BM FUEL · Live Meter Camera</title>
+<style>
+:root{color-scheme:dark;--o:#ff981f;--b:#12171e;--c:#202832;--t:#eef4fa}
+*{box-sizing:border-box}body{margin:0;background:var(--b);color:var(--t);font:16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+main{max-width:650px;margin:auto;padding:18px 14px 35px}header{display:flex;gap:10px;align-items:center;margin:4px 0 14px}
+.logo{font-size:19px;font-weight:900;color:var(--o)}.sub{color:#b6c4d3;font-size:12px}
+h1{margin:0;font-size:21px}p{color:#d1dce8}.stage{font-weight:700;color:#f7bf79}
+.preview{position:relative;background:#05070a;border:2px solid #415365;border-radius:16px;overflow:hidden;min-height:200px;display:grid;place-items:center}
+video{width:100%;height:auto;max-height:66vh;object-fit:contain;display:block}
+.guide{position:absolute;left:10%;right:10%;top:34%;height:32%;border:3px solid var(--o);border-radius:10px;pointer-events:none;box-shadow:0 0 0 500px #0005}
+.guide:after{content:'จัดตัวเลขลิตรให้อยู่ในกรอบ';position:absolute;bottom:-32px;left:0;right:0;text-align:center;font-size:12px;color:white;text-shadow:0 1px 4px #000}
+#shot{max-width:100%;width:100%;height:auto;display:none}button{border:0;border-radius:11px;background:var(--o);color:#17202b;padding:14px 18px;font-size:17px;font-weight:800;cursor:pointer}
+button.secondary{background:#3b4655;color:#fff}button:disabled{opacity:.45;cursor:default}
+.controls{display:flex;gap:10px;margin-top:15px}.controls button{flex:1}#retake,#send{display:none}
+#status{background:var(--c);border-radius:12px;padding:14px;margin:18px 0 0;min-height:56px}small{color:#a9bac9;display:block;margin-top:12px}
+</style>
+</head>
+<body><main>
+<header><span class="logo">⛽ BM FUEL</span><span class="sub">LIVE CAMERA · NO GALLERY</span></header>
+<h1>ถ่ายภาพมิเตอร์ / ຖ່າຍຮູບມິເຕີ</h1>
+<p>ใช้กล้องหลังของโทรศัพท์และเล็งเฉพาะ <strong>ตัวเลขจำนวนลิตรสะสม</strong> ให้ชัดเจน ไม่ใช่ราคาน้ำมันหรือยอดเงิน</p>
+<p class="stage">ขั้นตอน: ถ่าย → ตรวจภาพ → ยืนยันส่งให้ระบบ OCR</p>
+<div class="preview"><video id="video" autoplay playsinline muted></video><div class="guide" id="guide"></div><canvas id="shot"></canvas></div>
+<div class="controls"><button id="capture" type="button" disabled>📷 ถ่ายภาพ</button><button id="retake" class="secondary" type="button">ถ่ายใหม่</button><button id="send" type="button">✓ ใช้ภาพนี้</button></div>
+<div id="status" role="status" aria-live="polite">กำลังขอสิทธิ์กล้อง...</div>
+<small>รูปจะส่งกลับไปยัง BM FUEL Management ที่เปิดหน้ากล้องนี้เท่านั้น หน้าเว็บกล้องไม่มีปุ่มเลือกรูปหรือไฟล์จากเครื่อง</small>
+</main>
+<script>
+(()=>{'use strict';
+const $=x=>document.getElementById(x),p=new URLSearchParams(location.hash.slice(1));
+const captureId=p.get('captureId')||'',returnOrigin=p.get('returnOrigin')||'';
+let stream=null,encoded=null;
+function status(m){$('status').textContent=m;}
+function closeStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
+async function start(){
+  if(!window.opener||!/^https:\/\//.test(returnOrigin)||!captureId){status('ต้องเปิดหน้านี้จากปุ่มถ่ายมิเตอร์ใน BM FUEL เท่านั้น');return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){status('เบราว์เซอร์นี้ไม่รองรับกล้องสด กรุณาเปิดผ่าน Chrome/Safari บน HTTPS');return;}
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+  $('video').srcObject=stream;await $('video').play();$('capture').disabled=false;
+  status('กล้องพร้อมใช้งาน จัดตัวเลขไว้ตรงกลางกรอบสีส้มแล้วกดถ่าย');
+  }catch(e){status('เปิดกล้องไม่ได้: '+e.name+' — กรุณาอนุญาตใช้กล้องในเบราว์เซอร์ หรือใช้หน้า HTTPS บนโทรศัพท์');}
+}
+$('capture').addEventListener('click',()=>{
+  const v=$('video');if(!stream||!v.videoWidth)return;
+  // Crop centrally to minimize ambiguity from unit price/amount on dispenser.
+  const w=v.videoWidth,h=v.videoHeight,cropW=Math.round(w*.80),cropH=Math.round(h*.32);
+  const sourceX=Math.round((w-cropW)/2),sourceY=Math.round(h*.34);
+  const scale=Math.min(1,1600/cropW),c=$('shot');
+  c.width=Math.round(cropW*scale);c.height=Math.round(cropH*scale);
+  c.getContext('2d',{alpha:false}).drawImage(v,sourceX,sourceY,cropW,cropH,0,0,c.width,c.height);
+  encoded=c.toDataURL('image/jpeg',.85);
+  $('video').style.display='none';$('guide').style.display='none';c.style.display='block';
+  $('capture').style.display='none';$('retake').style.display='block';$('send').style.display='block';
+  status('ตรวจสอบภาพ: มองเห็นตัวเลขลิตรครบและชัดหรือไม่? ถ้าไม่ชัดให้กดถ่ายใหม่');
+});
+$('retake').addEventListener('click',()=>{
+  encoded=null;$('shot').style.display='none';$('video').style.display='block';$('guide').style.display='block';
+  $('capture').style.display='block';$('retake').style.display='none';$('send').style.display='none';status('เล็งให้ชัดแล้วกดถ่ายอีกครั้ง');
+});
+$('send').addEventListener('click',()=>{
+ if(!encoded||!window.opener)return;
+ $('send').disabled=true;closeStream();
+ try{window.opener.postMessage({type:'BM_METER_CAMERA_IMAGE',captureId:captureId,imageData:encoded},returnOrigin);
+   status('ส่งภาพกลับไปยัง BM FUEL แล้ว สามารถกลับไปหน้าระบบได้');
+   setTimeout(()=>window.close(),700);
+ }catch(e){status('ไม่สามารถส่งภาพกลับได้: '+e.message);$('send').disabled=false;}
+});
+window.addEventListener('beforeunload',closeStream);
+start();
+})();
+</script>
+</body></html>
