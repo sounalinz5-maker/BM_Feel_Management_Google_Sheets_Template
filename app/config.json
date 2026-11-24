@@ -1,0 +1,5 @@
+{
+  "mode": "demo",
+  "apiBaseUrl": null,
+  "note": "This public GitHub Pages app is an interface prototype. No credentials, Google Sheets IDs, access tokens, or API keys belong here. Real connection requires a secure browser-compatible API and production authorization."
+}

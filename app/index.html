@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07172c">
+  <meta name="description" content="BM FUEL Management — ระบบจัดการปั๊มน้ำมันบนมือถือ">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BM FUEL">
+  <meta name="referrer" content="no-referrer">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" href="../mobile/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="../mobile/icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>BM FUEL Management — Mobile App</title>
+</head>
+<body>
+  <div id="offlineBanner" role="status" hidden>ไม่มีอินเทอร์เน็ต — หน้า DEMO ยังใช้งานได้ แต่ระบบจริงต้องออนไลน์</div>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-art">
+      <div class="sunset"></div>
+      <div class="station-scene" aria-hidden="true">
+        <div class="canopy"></div><div class="canopy-bottom"></div>
+        <div class="pillar pillar-one"></div><div class="pillar pillar-two"></div>
+        <div class="pump pump-one"></div><div class="pump pump-two"></div>
+      </div>
+    </div>
+    <div class="login-body">
+      <div class="brand-row">
+        <div class="brand-logo" aria-hidden="true">⛽</div>
+        <div><div class="brand-kicker">BM FUEL MANAGEMENT</div><h1>จัดการปั๊มน้ำมัน<br>ได้ในแอปเดียว</h1></div>
+      </div>
+      <p class="login-sub">ระบบบริหารปั๊มน้ำมัน · ລະບົບບໍລິຫານປ້ຳນ້ຳມັນ</p>
+      <div class="alert-demo"><b>เวอร์ชันพัฒนาหน้าจอ</b> — ตัวเลขและข้อมูลในแอปเป็นตัวอย่าง ยังไม่เชื่อมกับ Google Sheets จริง</div>
+      <form id="loginForm" class="login-form" autocomplete="off">
+        <label for="username">ชื่อผู้ใช้</label>
+        <input id="username" type="text" placeholder="จะเปิดให้เข้าสู่ระบบจริงหลังเชื่อม API" disabled>
+        <label for="password">รหัสผ่าน</label>
+        <input id="password" type="password" placeholder="ยังไม่รับรหัสผ่านจริงบน GitHub" disabled>
+        <button class="btn-muted" type="submit" disabled>เข้าสู่ระบบจริง (ยังไม่เปิด)</button>
+      </form>
+      <button class="btn-primary btn-block" id="enterDemo" type="button">ดูตัวอย่างแอป BM FUEL <span aria-hidden="true">→</span></button>
+      <button class="btn-outline btn-block" id="installEntry" type="button">＋ ติดตั้งไอคอน BM FUEL</button>
+      <p class="install-guide" id="installGuide" hidden>Android: เปิดใน Chrome → เมนู ⋮ → ติดตั้งแอป / เพิ่มไปยังหน้าจอหลัก<br>iPhone: เปิดใน Safari → แชร์ → เพิ่มไปยังหน้าจอโฮม</p>
+      <a class="real-link" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">เปิดระบบ BM FUEL เดิมที่ใช้งานจริง <span aria-hidden="true">↗</span></a>
+    </div>
+  </div>
+
+  <div id="appShell" class="app-shell" hidden>
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="tiny-logo" aria-hidden="true">⛽</div>
+        <div><div class="eyebrow">BM FUEL MANAGEMENT</div><strong>BM FUEL <span>Mobile</span></strong></div>
+      </div>
+      <div class="header-right">
+        <span class="owner-pill">Owner · DEMO</span>
+        <button class="circle-btn" id="settingsShortcut" type="button" aria-label="ตั้งค่า">⚙</button>
+      </div>
+    </header>
+    <div class="demo-ribbon">● DEMO — หน้าตาและข้อมูลตัวอย่าง ยังไม่บันทึกยอดขายจริง</div>
+    <main class="main-content">
+      <section class="view active" id="view-home" aria-labelledby="home-title">
+        <div class="dashboard-hero">
+          <div class="hero-gradient" aria-hidden="true"></div>
+          <div class="hero-copy"><div class="mini-overline">ภาพรวมปั๊มน้ำมัน</div><h2 id="home-title">ยินดีต้อนรับสู่<br>BM FUEL</h2><p>จัดการทุกยอดขายและหัวจ่ายในที่เดียว</p></div>
+          <div class="hero-pump" aria-hidden="true"><div class="hero-canopy"></div><div class="hero-roof"></div><div class="hero-post post-a"></div><div class="hero-post post-b"></div><div class="hero-dispenser disp-a"></div><div class="hero-dispenser disp-b"></div></div>
+        </div>
+        <div class="section-heading"><h3>สรุปยอดวันนี้</h3><span class="mini-tag">ตัวเลขสาธิต</span></div>
+        <div class="sales-main"><span class="kpi-caption">ยอดขายรวมวันนี้</span><div class="sales-main-flex"><strong id="todaySales">—</strong><span>LAK</span></div><div class="kpi-sub"><span class="trend">↑ 12.5%</span><span>เทียบวันก่อน (ตัวอย่าง)</span></div></div>
+        <div class="mini-cards">
+          <article class="mini-card"><div class="mini-icon blue">◈</div><small>ปริมาณน้ำมันขาย</small><strong id="todayLiters">—</strong><span>ลิตร</span></article>
+          <article class="mini-card"><div class="mini-icon orange">▤</div><small>รายการขาย</small><strong id="todayTransactions">—</strong><span>รายการ</span></article>
+        </div>
+        <div class="section-heading"><h3>การจัดการด่วน</h3><span>Quick actions</span></div>
+        <div class="action-grid">
+          <button type="button" class="quick-action action-blue" data-go="meter"><span class="action-icon">⛽</span><strong>บันทึกมิเตอร์</strong><small>เปิด / ปิด · แนบรูป</small></button>
+          <button type="button" class="quick-action action-green" data-go="stock"><span class="action-icon">🚚</span><strong>รับน้ำมันเข้า</strong><small>ตรวจสต็อก</small></button>
+          <button type="button" class="quick-action action-purple" data-go="reports"><span class="action-icon">▤</span><strong>รายงาน</strong><small>ยอดขายรายวัน</small></button>
+          <button type="button" class="quick-action action-amber" data-go="settings"><span class="action-icon">⚙</span><strong>ตั้งค่า</strong><small>เจ้าของระบบ</small></button>
+        </div>
+        <div class="section-heading"><h3>ระดับน้ำมันในถัง</h3><span>Tank level</span></div>
+        <div class="tank-grid">
+          <article class="tank-card"><div class="tank-top"><span>🔵 ดีเซล</span><strong id="dieselPct">—</strong></div><strong class="tank-qty" id="dieselStock">—</strong><span class="tank-unit">ลิตร จากความจุ 30,000 ลิตร</span><div class="progress"><div id="dieselBar" class="progress-fill diesel-fill"></div></div></article>
+          <article class="tank-card"><div class="tank-top"><span>🟠 เบนซิน</span><strong id="gasPct">—</strong></div><strong class="tank-qty" id="gasStock">—</strong><span class="tank-unit">ลิตร จากความจุ 20,000 ลิตร</span><div class="progress"><div id="gasBar" class="progress-fill gas-fill"></div></div></article>
+        </div>
+        <div class="section-heading"><h3>กราฟปริมาณน้ำมันขาย</h3><span>หน่วย: ลิตร</span></div>
+        <article class="chart-card">
+          <div class="chart-head"><div class="legend"><span><i class="dot blue-dot"></i> ดีเซล</span><span><i class="dot orange-dot"></i> เบนซิน</span></div><div class="tabs" aria-label="ช่วงเวลากราฟ"><button type="button" data-days="1">วันนี้</button><button type="button" data-days="7" class="selected">7 วัน</button><button type="button" data-days="30">30 วัน</button></div></div>
+          <div class="chart-scroll"><div id="chartPlot" class="chart-plot" role="img" aria-label="กราฟแท่งเปรียบเทียบจำนวนลิตรดีเซลและเบนซิน"></div></div>
+          <div class="chart-summary"><div><small>ดีเซล</small><strong id="chartDiesel">—</strong></div><div><small>เบนซิน</small><strong id="chartGas">—</strong></div><div><small>รวมทั้งหมด</small><strong id="chartTotal">—</strong></div></div>
+        </article>
+        <div class="section-heading"><h3>หัวจ่ายทั้ง 6 หัว</h3><span>รายการตัวอย่าง</span></div>
+        <div class="pump-grid" id="pumpGrid"></div>
+        <div class="section-heading"><h3>กิจกรรมล่าสุด</h3><span>Recent activity</span></div>
+        <div class="activity-card" id="recentActivity"></div>
+      </section>
+
+      <section class="view" id="view-meter" aria-labelledby="meter-title">
+        <div class="page-heading"><div class="mini-overline">METER ENTRY</div><h2 id="meter-title">บันทึกมิเตอร์เปิด–ปิด</h2><p>คีย์เลขเองหรือใช้กล้องอ่าน OCR แล้วแนบรูปเปิด–ปิดเพื่อเทียบหลักฐาน</p></div>
+        <div class="notice">นี่คือแบบฟอร์ม DEMO — กดตรวจรายการแล้วข้อมูลจะไม่ถูกส่งไป Google Sheets</div>
+        <form class="form-card" id="meterForm">
+          <div class="form-grid">
+            <label>หัวจ่าย
+              <select id="nozzle" required>
+                <option value="1">หัวจ่าย 1 · ดีเซล</option><option value="2">หัวจ่าย 2 · ดีเซล</option><option value="3">หัวจ่าย 3 · ดีเซล</option>
+                <option value="4">หัวจ่าย 4 · เบนซิน</option><option value="5">หัวจ่าย 5 · เบนซิน</option><option value="6">หัวจ่าย 6 · เบนซิน</option>
+              </select>
+            </label>
+            <label>วันที่บันทึก<input type="date" id="meterDate" required></label>
+          </div>
+          <div class="reading-block">
+            <div class="reading-header"><strong>01 · มิเตอร์เปิด</strong><span>Opening</span></div>
+            <label for="meterOpen">เลขมิเตอร์เปิด (ลิตรสะสม)</label>
+            <input id="meterOpen" class="meter-number" placeholder="14234.322" inputmode="decimal" autocomplete="off" required>
+            <div class="photo-actions">
+              <label class="file-label" for="openPhoto">📷 ถ่ายรูป / เลือกรูป<input id="openPhoto" type="file" accept="image/*" capture="environment"></label>
+              <button type="button" class="ocr-action" data-ocr="open">◎ ถ่ายอ่าน OCR</button>
+            </div>
+            <button type="button" id="viewOpenPhoto" class="photo-preview-link" hidden>🔎 ดูภาพมิเตอร์เปิด</button>
+            <small id="openOcrNote" class="ocr-note">รองรับคีย์เองเมื่อ OCR อ่านเลขไม่ได้</small>
+          </div>
+          <div class="reading-block">
+            <div class="reading-header"><strong>02 · มิเตอร์ปิด</strong><span>Closing</span></div>
+            <label for="meterClose">เลขมิเตอร์ปิด (ลิตรสะสม)</label>
+            <input id="meterClose" class="meter-number" placeholder="14239.901" inputmode="decimal" autocomplete="off" required>
+            <div class="photo-actions">
+              <label class="file-label" for="closePhoto">📷 ถ่ายรูป / เลือกรูป<input id="closePhoto" type="file" accept="image/*" capture="environment"></label>
+              <button type="button" class="ocr-action" data-ocr="close">◎ ถ่ายอ่าน OCR</button>
+            </div>
+            <button type="button" id="viewClosePhoto" class="photo-preview-link" hidden>🔎 ดูภาพมิเตอร์ปิด</button>
+            <small id="closeOcrNote" class="ocr-note">สามารถแนบภาพได้ทั้งมิเตอร์เปิดและปิด</small>
+          </div>
+          <div class="calc-card"><span>จำนวนลิตรขาย (ปิด − เปิด)</span><strong id="meterResult">0.000 <small>ลิตร</small></strong><small id="meterError">กรอกเลขมิเตอร์เปิดและปิดเพื่อคำนวณ</small></div>
+          <div class="evidence-state" id="evidenceState">สถานะรูปหลักฐาน: ยังไม่ครบ — ต้องรอตรวจสอบ</div>
+          <button type="submit" class="btn-primary btn-block">ตรวจสอบรายการ (DEMO)</button>
+          <p class="form-footnote">เวอร์ชันทดสอบนี้ไม่จัดเก็บรูปหรือข้อมูลจริงบน GitHub และไม่ส่งข้อมูลเข้า Google Sheets</p>
+        </form>
+        <div class="section-heading"><h3>รายการที่ทดสอบในหน้านี้</h3><span>ล้างเมื่อโหลดใหม่</span></div>
+        <div id="meterDemoRecords" class="records-empty">ยังไม่มีรายการตัวอย่างที่ตรวจสอบ</div>
+      </section>
+
+      <section class="view" id="view-stock" aria-labelledby="stock-title">
+        <div class="page-heading"><div class="mini-overline">FUEL STOCK</div><h2 id="stock-title">จัดการสต็อกน้ำมัน</h2><p>ดูยอดคงเหลือและความจุถังได้ในหน้าเดียว</p></div>
+        <div class="notice">ระดับถังด้านล่างใช้ข้อมูลตัวอย่าง ยังไม่อ่านจากฐานข้อมูลจริง</div>
+        <div class="stock-panel"><div class="stock-head"><span class="stock-icon">⛽</span><div><strong>ดีเซล (Diesel)</strong><small>ถังหลัก · ความจุ 30,000 ลิตร</small></div></div><div class="stock-number">21,450.000 <small>ลิตร</small></div><div class="progress"><div class="progress-fill diesel-fill" style="width:71.5%"></div></div></div>
+        <div class="stock-panel"><div class="stock-head"><span class="stock-icon">⛽</span><div><strong>เบนซิน (Gasoline)</strong><small>ถังหลัก · ความจุ 20,000 ลิตร</small></div></div><div class="stock-number">8,600.000 <small>ลิตร</small></div><div class="progress"><div class="progress-fill gas-fill" style="width:43%"></div></div></div>
+        <div class="feature-note">การรับน้ำมันเข้าถังและการปรับยอดคงเหลือจริงจะเชื่อม API ที่ตรวจสิทธิ์ Owner/Staff หลังนำโค้ดปัจจุบันมารวมกัน เพื่อป้องกันการแก้ยอดสต็อกโดยไม่ได้รับอนุญาต</div>
+      </section>
+
+      <section class="view" id="view-reports" aria-labelledby="reports-title">
+        <div class="page-heading"><div class="mini-overline">REPORTS & ANALYTICS</div><h2 id="reports-title">รายงานปริมาณน้ำมัน</h2><p>เปรียบเทียบยอดขายดีเซลและเบนซินเป็นลิตร</p></div>
+        <div class="notice">รายงานนี้เป็น DEMO ไม่ใช่ยอดขายจาก Google Sheets</div>
+        <div class="report-card"><h3>ยอดขายย้อนหลัง 7 วัน</h3><div class="report-summary" id="reportTotals"></div><div id="reportRows"></div></div>
+        <div class="feature-note">การส่งออก CSV/PDF และรายงานการเงินจริงจะเปิดเมื่อการเชื่อมต่อปลอดภัยกับ Apps Script เสร็จสมบูรณ์</div>
+      </section>
+
+      <section class="view" id="view-settings" aria-labelledby="settings-title">
+        <div class="page-heading"><div class="mini-overline">OWNER SETTINGS</div><h2 id="settings-title">ตั้งค่าแอป</h2><p>จัดการการติดตั้ง การเชื่อมต่อ และบัญชีผู้ใช้</p></div>
+        <div class="settings-card"><div class="settings-line"><span>เวอร์ชันแอป</span><strong>BM FUEL PWA v2.0 · DEMO</strong></div><div class="settings-line"><span>สถานะฐานข้อมูล</span><strong class="not-ready">ยังไม่เชื่อมต่อ</strong></div><div class="settings-line"><span>Google Sheets</span><strong>ยังไม่อ่านข้อมูลจริง</strong></div><div class="settings-line"><span>โหมดแอป</span><strong>หน้าแอปติดตั้งได้</strong></div></div>
+        <button class="btn-outline btn-block" id="installSettings" type="button">＋ ติดตั้ง BM FUEL ลงหน้าจอ Home</button>
+        <div class="settings-card"><h3>ระบบบัญชีและรหัสผ่าน</h3><p>การเปลี่ยนรหัส การกู้รหัส และจัดการสิทธิ์พนักงาน ต้องทำผ่าน Backend ที่ตรวจสิทธิ์จริง ขณะนี้ไม่เปิดรับรหัสผ่านบน GitHub</p><a class="real-link" target="_blank" rel="noopener noreferrer" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec">เปิดระบบปัจจุบันใน Google Apps Script ↗</a></div>
+        <div class="settings-card"><h3>แนวทางเชื่อมระบบ Production</h3><p>ต้องสร้าง API ผ่าน HTTPS ที่อนุญาต Origin ของ GitHub Pages อย่างเจาะจง ตรวจเซสชันและสิทธิ์ผู้ใช้ทุกคำขอ ไม่ฝังรหัสผ่านหรือ Google Service Account ในเว็บสาธารณะ</p></div>
+        <button id="leaveDemo" type="button" class="btn-muted btn-block">ออกจากตัวอย่างแอป</button>
+      </section>
+    </main>
+    <nav class="bottom-nav" aria-label="เมนูหลัก">
+      <button class="nav-button active" type="button" data-go="home"><span>⌂</span><small>ภาพรวม</small></button>
+      <button class="nav-button" type="button" data-go="meter"><span>⛽</span><small>มิเตอร์</small></button>
+      <button class="nav-button" type="button" data-go="stock"><span>▰</span><small>สต็อก</small></button>
+      <button class="nav-button" type="button" data-go="reports"><span>▥</span><small>รายงาน</small></button>
+      <button class="nav-button" type="button" data-go="settings"><span>⚙</span><small>ตั้งค่า</small></button>
+    </nav>
+  </div>
+
+  <dialog id="photoDialog" class="photo-dialog" aria-label="ดูภาพหลักฐาน">
+    <div class="dialog-head"><strong id="photoTitle">ภาพหลักฐาน</strong><button id="closePhotoDialog" type="button">✕</button></div>
+    <img id="photoImage" alt="ภาพมิเตอร์สำหรับตรวจเทียบตัวเลข">
+    <p>ตรวจด้วยตาอีกครั้งว่าตัวเลขในภาพตรงกับช่องมิเตอร์เปิดหรือปิดก่อนบันทึกในระบบจริง</p>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
