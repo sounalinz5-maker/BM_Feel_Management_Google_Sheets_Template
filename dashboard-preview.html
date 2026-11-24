@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BM FUEL V8.1 · Dashboard Preview (DEMO)</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#06182d;color:#eaf4ff;font:14px system-ui,"Noto Sans Lao",Arial,sans-serif}
+header{padding:24px 6%;background:radial-gradient(ellipse at 75% 120%,#c66a21a3,transparent 55%),linear-gradient(135deg,#0e254a,#17375a 65%,#281b32);border-bottom:1px solid #496587;min-height:157px}
+header h1{font-size:clamp(24px,4vw,35px);margin:7px 0}header small{color:#ffa22e;letter-spacing:.8px;font-weight:900}
+header p{margin:5px 0;font-size:12px;color:#cfe2fa}
+.demo{position:sticky;top:0;z-index:4;background:#aa4c0a;padding:10px;text-align:center;font-size:12px;font-weight:900;color:white}
+main{max-width:1180px;margin:auto;padding:20px 4% 85px}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 10px}
+.heading h2{font-size:16px;margin:0}.heading a{font-size:12px;color:#ffad49;text-decoration:none}
+.card{background:linear-gradient(145deg,#1c3b61,#102a46);border:1px solid #41658a;border-radius:16px;padding:16px}
+.hero{display:grid;grid-template-columns:1.5fr 1fr;background:radial-gradient(ellipse at 0% 100%,#a7532255,transparent 48%),linear-gradient(130deg,#203c60,#102944);border:1px solid #536789;border-radius:18px;overflow:hidden}
+.hero>div{padding:20px}.hero>div+div{border-left:1px solid #6483a655}
+.k{font-size:12px;color:#bfd7f4}.big{font-size:clamp(29px,4vw,45px);font-weight:900;margin:10px 0;color:#fff;word-break:break-word}.unit{color:#ffc079;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.kpis .card b{display:block;font-size:21px;margin:6px 0}
+.tanks{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.tank-head{display:flex;justify-content:space-between;align-items:center;font-weight:800}.percent{border:2px solid #4ce0a4;border-radius:99px;padding:7px}.bar{background:#07192e;border-radius:9px;height:9px;margin:13px 0 9px;overflow:hidden}.bar>div{height:100%;background:linear-gradient(90deg,#2ebeff,#4ce4a2);width:67%}.gas .bar>div{background:linear-gradient(90deg,#ed7412,#ffb037);width:43%}.gas .percent{border-color:#ffa42d}.tank b{display:block;font-size:24px;margin-top:8px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.quick button{background:linear-gradient(145deg,#1a3d63,#112b4b);border:1px solid #456889;border-radius:13px;color:#eff7ff;padding:14px 8px;font-weight:800}.quick button:first-child{background:linear-gradient(100deg,#ff921a,#e76d00)}
+.analytics{margin-top:18px;padding:16px;border:1px solid #4f78a4;border-radius:17px;background:linear-gradient(150deg,#19395b,#0b2441)}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.toprow h2{font-size:16px;margin:0}
+.tab{border:1px solid #48627d;border-radius:999px;padding:3px;display:flex;gap:4px}.tab button{background:transparent;border:0;border-radius:99px;color:#e5f3ff;font-weight:800;padding:8px 13px}.tab button.sel{background:#ff981d;color:#182138}
+.graph{display:grid;grid-template-columns:195px minmax(0,1fr);gap:14px;margin-top:15px}
+.graphstat>div{padding:14px;margin-bottom:9px;background:#103150;border:1px solid #42668b;border-radius:12px}
+.graphstat b{display:block;font-size:23px;margin:7px 0}.graphstat .blue{color:#43baff}.graphstat .orange{color:#ffad4a}
+.plot{background:#0b233e;border:1px solid #3b5978;border-radius:12px;padding:10px;overflow-x:auto}
+.legend{text-align:right;color:#aecdde;font-size:12px}.legend span{margin-left:13px}
+#chart svg{width:100%;display:block;min-width:0}
+.pumps{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.pump{border:1px solid #41668e;border-radius:12px;background:#153456;padding:12px 7px}.pump b{font-size:17px}.pump small{display:block;color:#a9c6e7;margin:5px 0}
+.state{display:inline-block;background:#205843;color:#94ffcc;border-radius:99px;padding:5px 6px;font-size:10px}
+.activity .row{display:flex;justify-content:space-between;border-bottom:1px solid #486180;padding:10px 0}.activity .row:last-child{border:0}
+nav{position:fixed;bottom:0;left:0;right:0;padding:12px;background:#0d2543f7;border-top:1px solid #406284;display:flex;justify-content:space-evenly;gap:6px}nav span{flex:1;text-align:center;font-size:12px;padding:8px;border-radius:12px}nav span:first-child{background:#ff9119;color:white;font-weight:900}
+@media(max-width:700px){.graph{grid-template-columns:1fr}.graphstat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.graphstat>div{margin:0;padding:10px}.graphstat b{font-size:15px}.pumps{grid-template-columns:repeat(3,1fr)}.quick{grid-template-columns:repeat(2,1fr)}.tanks{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero>div+div{border-left:0;border-top:1px solid #6483a655}.kpis{grid-template-columns:repeat(2,1fr)}.kpis>div:last-child{grid-column:span 2}}
+</style></head><body>
+<div class="demo">DEMO · ตัวอย่างดีไซน์เท่านั้น ไม่ใช่ยอดขายจาก Google Sheets จริง</div>
+<header><small>⛽ BM FUEL MANAGEMENT · ລະບົບບໍລິຫານປ້ຳນ້ຳມັນ</small><h1>BM FUEL Management</h1><p>Owner Dashboard · Dark Navy / Orange · Liters Analytics</p></header>
+<main>
+<div class="heading"><h2>ภาพรวมปั๊มน้ำมัน / ພາບລວມ</h2><a>24/11/2026</a></div>
+<div class="hero"><div><div class="k">ยอดขายวันนี้ · Today's Sales</div><div class="big">142,343,000 <span class="unit">ກີບ</span></div><div class="k">ตัวเลขตัวอย่างสำหรับเลือกหน้าตา</div></div><div><div class="k">ปริมาณที่ขายวันนี้</div><div class="big" style="font-size:27px">2,750.200 <span class="unit">ລິດ</span></div><div class="k">รายการขาย: 286 รายการ</div></div></div>
+<div class="kpis"><div class="card"><small>🔵 ดีเซลวันนี้</small><b>1,483.400</b><small>ลิตร</small></div><div class="card"><small>🟠 เบนซินวันนี้</small><b>1,266.800</b><small>ลิตร</small></div><div class="card"><small>📊 กราฟ 7 วัน</small><b>14,234.400</b><small>ลิตร (DEMO)</small></div></div>
+<div class="heading"><h2>▰ ระดับน้ำมันในถัง / Tank Level</h2><a>ดูสต็อก ›</a></div>
+<div class="tanks"><div class="card tank"><div class="tank-head">🔵 ดีเซล / Diesel <span class="percent">66.7%</span></div><small>คงเหลือโดยประมาณ</small><b>20,000 ลิตร</b><div class="bar"><div></div></div><small>ความจุ 30,000 ลิตร</small></div><div class="card tank gas"><div class="tank-head">🟠 เบนซิน / Gasoline <span class="percent">43.0%</span></div><small>คงเหลือโดยประมาณ</small><b>8,600 ลิตร</b><div class="bar"><div></div></div><small>ความจุ 20,000 ลิตร</small></div></div>
+<div class="heading"><h2>⚡ เมนูด่วน / Quick Actions</h2></div>
+<div class="quick"><button>⛽ มิเตอร์เปิด–ปิด</button><button>🚚 รับน้ำมัน</button><button>🧾 บันทึกขาย</button><button>▥ รายงาน</button></div>
+<div class="analytics"><div class="toprow"><div><h2>📊 กราฟเปรียบเทียบปริมาณน้ำมันขาย (ลิตร)</h2><small>ดีเซล (น้ำเงิน) กับ เบนซิน (ส้ม)</small></div><div class="tab"><button data-p="today">วันนี้</button><button data-p="7" class="sel">7 วัน</button><button data-p="30">30 วัน</button></div></div>
+<div class="graph"><div class="graphstat"><div><small class="blue">■ Diesel</small><b id="diesel">—</b><small>ลิตร</small></div><div><small class="orange">■ Gasoline</small><b id="gas">—</b><small>ลิตร</small></div><div><small>รวมทั้งสองชนิด</small><b id="all">—</b><small>ลิตร</small></div></div><div class="plot"><div class="legend"><span>🔵 ดีเซล</span><span>🟠 เบนซิน</span></div><div id="chart"></div></div></div></div>
+<div class="heading"><h2>⛽ สถานะมิเตอร์หัวจ่าย / 6 Pumps</h2><a>ดูรูปมิเตอร์ ›</a></div><div class="pumps"><div class="pump"><b>P1</b><small>ดีเซล</small><span class="state">บันทึกแล้ว</span></div><div class="pump"><b>P2</b><small>ดีเซล</small><span class="state">บันทึกแล้ว</span></div><div class="pump"><b>P3</b><small>ดีเซล</small><span class="state">รอปิด</span></div><div class="pump"><b>P4</b><small>เบนซิน</small><span class="state">บันทึกแล้ว</span></div><div class="pump"><b>P5</b><small>เบนซิน</small><span class="state">รอปิด</span></div><div class="pump"><b>P6</b><small>เบนซิน</small><span class="state">บันทึกแล้ว</span></div></div>
+<div class="heading"><h2>◷ รายการล่าสุด / Recent Activity</h2></div><div class="card activity"><div class="row"><span>⛽ บันทึกมิเตอร์ P1</span><b>53.125 ลิตร</b></div><div class="row"><span>⛽ บันทึกมิเตอร์ P4</span><b>90.530 ลิตร</b></div><div class="row"><span>🚚 รับน้ำมันดีเซล</span><b>10,000 ลิตร</b></div></div>
+</main><nav><span>⌂ ภาพรวม</span><span>⛽ มิเตอร์</span><span>▰ สต็อก</span><span>▥ รายงาน</span><span>⚙ ตั้งค่า</span></nav>
+<script>
+const base=[986.5,1124.3,1189.2,1305.4,1358,1482.3,1483.4],other=[783.2,887.6,938.8,1063.2,1116.5,1161.2,1266.8];
+function render(p){
+  let a=p==='today'?base.slice(-1):p==='30'?Array.from({length:30},(_,i)=>700+(i*23)%680):base;
+  let b=p==='today'?other.slice(-1):p==='30'?Array.from({length:30},(_,i)=>550+(i*18)%520):other;
+  let fmt=x=>x.toLocaleString('en-US',{maximumFractionDigits:1});
+  let as=a.reduce((x,y)=>x+y,0),bs=b.reduce((x,y)=>x+y,0);document.querySelector('#diesel').textContent=fmt(as);document.querySelector('#gas').textContent=fmt(bs);document.querySelector('#all').textContent=fmt(as+bs);
+  let max=Math.ceil(Math.max(...a,...b)/400)*400;
+  let w=p==='30'?1100:500, h=230,l=35,r=10,t=16,plot=h-46,band=(w-l-r)/a.length,bw=Math.max(3,Math.min(16,band*.3));
+  let svg='<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="กราฟตัวอย่างจำนวนลิตร">';
+  for(let j=0;j<5;j++){let y=t+plot*j/4;svg+='<line x1="'+l+'" y1="'+y+'" x2="'+(w-r)+'" y2="'+y+'" stroke="#59718a" stroke-opacity=".4" stroke-dasharray="3,5"/><text x="'+(l-4)+'" y="'+(y+3)+'" font-size="9" text-anchor="end" fill="#a8c4dd">'+fmt(max*(4-j)/4)+'</text>';}
+  a.forEach((n,i)=>{let x=l+band*(i+.5),ha=n/max*plot,hb=b[i]/max*plot;svg+='<rect x="'+(x-bw-1)+'" y="'+(t+plot-ha)+'" width="'+bw+'" height="'+ha+'" fill="#248ffe" rx="2"/><rect x="'+(x+1)+'" y="'+(t+plot-hb)+'" width="'+bw+'" height="'+hb+'" fill="#ff9825" rx="2"/><text x="'+x+'" y="'+(h-10)+'" fill="#c6d7ed" text-anchor="middle" font-size="10">'+(p==='30'?i+1:p==='today'?24:18+i)+'/11</text>';});
+  document.querySelector('#chart').innerHTML=svg+'</svg>';document.querySelectorAll('[data-p]').forEach(n=>n.classList.toggle('sel',n.dataset.p===p));}
+document.querySelectorAll('[data-p]').forEach(n=>n.onclick=()=>render(n.dataset.p));render('7');
+</script></body></html>
