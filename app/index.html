@@ -34,18 +34,13 @@
       </div>
       <p class="login-sub">ระบบบริหารปั๊มน้ำมัน · ລະບົບບໍລິຫານປ້ຳນ້ຳມັນ</p>
       <div class="alert-demo"><b>เวอร์ชันพัฒนาหน้าจอ</b> — ตัวเลขและข้อมูลในแอปเป็นตัวอย่าง ยังไม่เชื่อมกับ Google Sheets จริง</div>
-      <form id="loginForm" class="login-form" autocomplete="off">
-        <label for="username">ชื่อผู้ใช้</label>
-        <input id="username" type="text" placeholder="จะเปิดให้เข้าสู่ระบบจริงหลังเชื่อม API" disabled>
-        <label for="password">รหัสผ่าน</label>
-        <input id="password" type="password" placeholder="ยังไม่รับรหัสผ่านจริงบน GitHub" disabled>
-        <button class="btn-muted" type="submit" disabled>เข้าสู่ระบบจริง (ยังไม่เปิด)</button>
-      </form>
-      <button class="btn-primary btn-block" id="enterDemo" type="button">ดูตัวอย่างแอป BM FUEL <span aria-hidden="true">→</span></button>
+      <a class="btn-primary btn-block" id="liveLogin" style="text-align:center;text-decoration:none;" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">🔐 เข้าสู่ระบบ BM FUEL จริง ↗</a>
+      <p class="login-sub">เข้าสู่ระบบเดิมผ่าน Google Apps Script โดยตรง ระบบนี้เท่านั้นที่ตรวจรหัสผ่านจริง ปุ่มนี้จะเปิด Chrome/Safari แยกจากแอปเต็มจอ</p>
+      <button class="btn-outline btn-block" id="enterDemo" type="button">ดูหน้าตา BM FUEL เต็มจอ (DEMO) <span aria-hidden="true">→</span></button>
       <button class="btn-outline btn-block" id="installEntry" type="button">＋ ติดตั้ง BM FUEL แบบเต็มจอ</button>
       <p id="displayModeInfo" class="install-guide" role="status" aria-live="polite"></p>
       <p class="install-guide" id="installGuide" hidden>Android: เปิดใน Chrome → เมนู ⋮ → ติดตั้งแอป / เพิ่มไปยังหน้าจอหลัก<br>iPhone: เปิดใน Safari → แชร์ → เพิ่มไปยังหน้าจอโฮม</p>
-      <a class="real-link" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">เปิดระบบ BM FUEL เดิมที่ใช้งานจริง <span aria-hidden="true">↗</span></a>
+      <p class="login-sub" style="text-align:center;">เวอร์ชัน DEMO ยังไม่เชื่อมฐานข้อมูล โปรดใช้ปุ่มเข้าสู่ระบบจริงด้านบนสำหรับยอดขายปัจจุบัน</p>
     </div>
   </div>
 
