@@ -17,11 +17,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install Android SDK 35
+      - name: Inspect preinstalled Android SDK
         run: |
-          echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
-          "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" --install 'platforms;android-35' 'build-tools;35.0.0'
-          yes | "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" --licenses > /dev/null || true
+          ls -la "$ANDROID_HOME" || true
+          ls -la "$ANDROID_HOME/platforms" || true
+          ls -la "$ANDROID_HOME/build-tools" || true
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
