@@ -62,15 +62,14 @@ button,a{font:inherit}button{cursor:pointer}
     <h1>จัดการปั๊มน้ำมัน<br>ได้จากโทรศัพท์</h1>
     <p>เปิดระบบ BM FUEL ที่คุณใช้อยู่ พร้อมปุ่มเข้าสู่ Dashboard ที่คุณเลือก ดีไซน์น้ำเงินเข้ม–ส้ม</p>
   </section>
-  <div class="section"><h2>เริ่มใช้งาน</h2><small>BM FUEL</small></div>
-  <a class="action real" id="liveApp" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">
-    <span class="em" aria-hidden="true">⛽</span><span class="copy"><strong>เปิดระบบ BM FUEL จริง</strong><small>เข้า Login เดิม บันทึกมิเตอร์ และใช้งาน Google Sheets ตามปกติ</small></span><span class="chevron" aria-hidden="true">›</span>
-  </a>
-  <div style="height:12px"></div>
-  <a class="action" href="../dashboard-preview.html" target="_blank" rel="noopener noreferrer">
-    <span class="em" aria-hidden="true">📊</span><span class="copy"><strong>ดูหน้า Dashboard V8.1</strong><small>ตัวอย่างดีไซน์กราฟเปรียบเทียบดีเซล–เบนซินเป็นลิตร (DEMO)</small></span><span class="chevron" aria-hidden="true">›</span>
-  </a>
-  <div class="section"><h2>ติดตั้งลงโทรศัพท์</h2></div>
+  <div class="panel" style="border:2px solid #ff9722;background:#173653">
+    <h3 style="color:#ffb65e;font-size:17px">1. ติดตั้งจากหน้า GitHub นี้ก่อน</h3>
+    <p>ลิงก์สำหรับติดตั้งต้องเป็น <b>sounalinz5-maker.github.io</b> เท่านั้น ถ้าด้านบนขึ้น <b>script.google.com</b> แปลว่าคุณเข้าไปหน้าแอปจริงเร็วเกินไปและจะขึ้น “ติดตั้งแอปนี้ไม่ได้”</p>
+    <p>บน Android ให้เปิดในแอป <b>Chrome โดยตรง</b> (กดคัดลอกลิงก์แล้ววางในช่องที่อยู่ Chrome) และเลือก <b>⋮ → ติดตั้งแอป</b> หรือ <b>เพิ่มไปยังหน้าจอหลัก</b></p>
+    <button id="copyInstallUrl" class="install" type="button" style="margin-top:12px">📋 คัดลอกลิงก์ติดตั้งสำหรับเปิดใน Chrome</button>
+    <p id="copyStatus" role="status" aria-live="polite" style="margin-top:9px"></p>
+  </div>
+  <div class="section"><h2>เพิ่ม BM FUEL ลงหน้าจอ Home</h2><small>ขั้นตอนที่ 1</small></div>
   <button type="button" id="installBtn" class="install">⬇ ติดตั้ง BM FUEL บนโทรศัพท์</button>
   <div class="status" id="installStatus" role="status" aria-live="polite">เตรียมระบบติดตั้ง…</div>
   <div class="panel">
@@ -82,6 +81,14 @@ button,a{font:inherit}button{cursor:pointer}
       <p>หากมี BM FUEL แบบทางลัดเก่า ให้ลบทางลัดเก่าก่อนแล้วติดตั้งจากหน้านี้</p>
     </div>
   </div>
+  <div class="section"><h2>เปิดใช้งานหลังติดตั้ง</h2><small>ขั้นตอนที่ 2</small></div>
+  <a class="action real" id="liveApp" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">
+    <span class="em" aria-hidden="true">⛽</span><span class="copy"><strong>เปิดระบบ BM FUEL จริง</strong><small>เข้า Login เดิม บันทึกมิเตอร์ และใช้งาน Google Sheets ตามปกติ</small></span><span class="chevron" aria-hidden="true">›</span>
+  </a>
+  <div style="height:12px"></div>
+  <a class="action" href="../dashboard-preview.html" target="_blank" rel="noopener noreferrer">
+    <span class="em" aria-hidden="true">📊</span><span class="copy"><strong>ดูหน้า Dashboard V8.1</strong><small>ตัวอย่างดีไซน์กราฟเปรียบเทียบดีเซล–เบนซินเป็นลิตร (DEMO)</small></span><span class="chevron" aria-hidden="true">›</span>
+  </a>
   <div class="panel">
     <h3>ข้อมูลของคุณยังปลอดภัยในระบบเดิม</h3>
     <p>แอปที่ติดตั้งจาก GitHub Pages นี้เป็น <b>ตัวเปิดระบบ (PWA Launcher)</b> เท่านั้น ไม่มีข้อมูลลูกค้า รหัสผ่าน ยอดขาย หรือ Google Sheets อยู่ใน GitHub การกดเปิดระบบจริงจะไปยัง Google Apps Script ซึ่งอาจแสดงแถบแจ้งเตือนของ Google ตามปกติ</p>
@@ -110,6 +117,15 @@ button,a{font:inherit}button{cursor:pointer}
    try{await prompt.prompt();var response=await prompt.userChoice;status.textContent=response.outcome==='accepted'?'ได้รับคำสั่งติดตั้งแล้ว กรุณาดูไอคอน BM FUEL':'ยังไม่ได้ติดตั้ง คุณสามารถติดตั้งจากเมนู Chrome ได้';}
    catch(e){help.hidden=false;status.textContent='Chrome ไม่เปิดหน้าติดตั้ง โปรดใช้เมนู ⋮ → ติดตั้งแอป';}
    render();
+ });
+ document.getElementById('copyInstallUrl').addEventListener('click',async function(){
+   var url=new URL('./',window.location.href).href;
+   try{
+     await navigator.clipboard.writeText(url);
+     document.getElementById('copyStatus').textContent='คัดลอกแล้ว — เปิดแอป Chrome แล้ววางลิงก์นี้ในช่องที่อยู่';
+   }catch(err){
+     document.getElementById('copyStatus').textContent='คัดลอกอัตโนมัติไม่ได้ โปรดกดค้างที่ช่องที่อยู่ Chrome แล้วคัดลอกลิงก์หน้าติดตั้ง';
+   }
  });
  function online(){var x=document.getElementById('onlineStatus');x.textContent=navigator.onLine?'● เชื่อมต่ออินเทอร์เน็ตอยู่':'● ออฟไลน์ — เปิดระบบจริงต้องใช้อินเทอร์เน็ต';x.classList.toggle('offline',!navigator.onLine)}
  window.addEventListener('online',online);window.addEventListener('offline',online);online();
