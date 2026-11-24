@@ -1,0 +1,26 @@
+name: BM FUEL iOS Simulator Build
+on:
+  push:
+    paths:
+      - 'ios-native/**'
+      - '.github/workflows/bm-fuel-ios.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        working-directory: ios-native
+        run: xcodegen generate
+      - name: Compile iOS simulator without signing
+        working-directory: ios-native
+        run: |
+          xcodebuild -project BMFuelIOS.xcodeproj -scheme BMFuelIOS \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build

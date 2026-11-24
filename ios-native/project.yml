@@ -1,0 +1,26 @@
+name: BMFuelIOS
+options:
+  bundleIdPrefix: la.bmfuel
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+targets:
+  BMFuelIOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+    info:
+      path: Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: la.bmfuel.management.ios
+        INFOPLIST_FILE: Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+schemes:
+  BMFuelIOS:
+    build:
+      targets:
+        BMFuelIOS: all
