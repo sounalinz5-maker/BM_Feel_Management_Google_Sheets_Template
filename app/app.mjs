@@ -13,6 +13,22 @@ function dateNow(){
   const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
   return [y,m,day].join("-");
 }
+function updateDisplayModeInfo(){
+  const fullscreen=window.matchMedia("(display-mode: fullscreen)").matches;
+  const standalone=window.matchMedia("(display-mode: standalone)").matches || navigator.standalone===true;
+  const description=fullscreen
+    ?"โหมดเต็มจอเปิดอยู่ — ไม่มีแถบ URL ของ Chrome"
+    :standalone
+      ?"เปิดจากไอคอนแอปแล้ว — ไม่มีแถบ URL (อาจเห็นแถบสถานะของโทรศัพท์)"
+      :"ตอนนี้ยังเปิดอยู่ในเบราว์เซอร์ — ติดตั้งและเปิดจากไอคอน Home เพื่อซ่อน URL";
+  const a=$("displayModeInfo"),b=$("displayModeDetails");
+  if(a)a.textContent=description;
+  if(b)b.textContent=description;
+}
+for(const mode of ["fullscreen","standalone"]){
+  const media=window.matchMedia("(display-mode: "+mode+")");
+  if(media.addEventListener)media.addEventListener("change",updateDisplayModeInfo);
+}
 function installAdvice(){
   if(deferredPrompt)return;
   $("installGuide").hidden=false;
@@ -29,7 +45,7 @@ async function install(){
   }catch(e){installAdvice();}
 }
 window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredPrompt=event;});
-window.addEventListener("appinstalled",()=>{deferredPrompt=null;toast("ติดตั้งไอคอน BM FUEL สำเร็จ");});
+window.addEventListener("appinstalled",()=>{deferredPrompt=null;toast("ติดตั้งไอคอน BM FUEL สำเร็จ");updateDisplayModeInfo();});
 function statusOnline(){
   $("offlineBanner").hidden=navigator.onLine;
 }
@@ -198,6 +214,7 @@ function installHandlers(){
 function init(){
   $("meterDate").value=dateNow();
   installHandlers();
+  updateDisplayModeInfo();
   updateMeter();
   if("serviceWorker" in navigator){
     window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js",{scope:"./"}).catch(error=>console.warn("Service Worker:",error)));
