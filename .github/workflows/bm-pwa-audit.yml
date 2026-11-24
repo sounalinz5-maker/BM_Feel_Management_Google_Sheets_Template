@@ -1,0 +1,63 @@
+name: Verify BM FUEL PWA installability assets
+on:
+  push:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/bm-pwa-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check deployed HTTPS PWA, manifest, icons and service worker
+        env:
+          BASE: https://sounalinz5-maker.github.io/BM_Feel_Management_Google_Sheets_Template/mobile/
+        run: |
+          python3 - <<'PY'
+          import json,os,re,struct,time,urllib.request,zlib
+          from urllib.parse import urljoin,urlparse
+          base=os.environ['BASE']
+          def get(path):
+              u=urljoin(base,path)
+              for attempt in range(8):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':'BM-FUEL-PWA-Audit/1.0'}),timeout=15) as r:
+                          if r.status!=200:raise ValueError(f'HTTP {r.status}')
+                          return r.read(),dict(r.headers)
+                  except Exception as e:
+                      if attempt==7:raise RuntimeError(f'{u}: {e}')
+                      time.sleep(8)
+          html,head=get('index.html')
+          assert b'<link rel="manifest" href="./manifest.json">' in html, 'Missing manifest link'
+          assert b"serviceWorker.register('./sw.js'" in html, 'Missing service worker registration'
+          assert b'window.location.replace(' not in html, 'Cannot redirect away from installable origin'
+          manifest,_=get('manifest.json')
+          m=json.loads(manifest)
+          assert m['display'] in ('standalone','fullscreen','minimal-ui')
+          assert m['start_url']=='./index.html'
+          assert m['scope']=='./'
+          assert m['name'] and m['short_name']
+          assert m['theme_color'] and m['background_color']
+          icon_sizes=set()
+          for item in m['icons']:
+              b,headers=get(item['src'])
+              assert b[:8]==b'\x89PNG\r\n\x1a\n', f'Invalid PNG signature: {item["src"]}'
+              w,h=struct.unpack('>II',b[16:24])
+              assert w==h, f'Non-square icon: {item["src"]}'
+              assert item['type']=='image/png'
+              assert item['sizes']==f'{w}x{h}'
+              icon_sizes.add(w)
+              assert b'IEND' in b and b'IDAT' in b
+              print('ICON PASS',item['src'], w,h,len(b),'bytes',headers.get('Content-Type'))
+          assert {192,512}.issubset(icon_sizes), f'Icon sizes missing: {icon_sizes}'
+          sw,headers=get('sw.js')
+          assert b"addEventListener('fetch'" in sw
+          assert b"addEventListener('install'" in sw
+          assert b"addEventListener('activate'" in sw
+          assert urlparse(base).scheme=='https'
+          print('PWA ASSET AUDIT PASS',base)
+          print('This validates the deployed PWA assets, not a live on-device installation, Google Apps Script login or fullscreen operation after opening external URLs.')
+          PY
