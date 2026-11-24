@@ -30,7 +30,8 @@ jobs:
           import json,pathlib
           root=pathlib.Path('app')
           m=json.loads((root/'manifest.json').read_text())
-          assert m['display']=='standalone'
+          assert m['display']=='fullscreen'
+          assert m['display_override'][0]=='fullscreen'
           assert m['start_url']=='./index.html' and m['scope']=='./'
           html=(root/'index.html').read_text()
           assert 'rel="manifest"' in html
