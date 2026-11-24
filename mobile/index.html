@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07182e">
+<meta name="description" content="BM FUEL Management Mobile — แอปติดตั้งบนโทรศัพท์เพื่อเปิดระบบจัดการปั๊มน้ำมันจริง">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BM FUEL">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>BM FUEL Management Mobile</title>
+<style>
+:root{color-scheme:dark;--navy:#07182e;--panel:#143556;--panel2:#0e2947;--line:#365a7f;--white:#f5f9ff;--light:#c9def2;--orange:#ff9722;--green:#6de0b5}
+*{box-sizing:border-box}html{height:100%;background:var(--navy)}
+body{min-height:100dvh;margin:0;color:var(--white);font:15px/1.5 system-ui,-apple-system,"Segoe UI","Noto Sans Thai","Noto Sans Lao",sans-serif;background:radial-gradient(ellipse at 60% -4%,#2d4770 0%,transparent 42%),linear-gradient(160deg,#0c2644 0%,#06172d 64%,#041223)}
+button,a{font:inherit}button{cursor:pointer}
+.page{margin:auto;max-width:640px;padding:19px 17px max(32px,env(safe-area-inset-bottom))}
+.topbar{display:flex;align-items:center;gap:12px;padding:5px 1px 18px}
+.brandicon{width:49px;height:49px;flex-shrink:0;border:1px solid #5c7190;border-radius:15px;background:#173e63 url("./icons/icon-192.png") center/cover no-repeat}
+.eyebrow{color:#ffb04e;font-size:11px;font-weight:900;letter-spacing:.12em}
+.topbar strong{display:block;font-size:18px;line-height:1.25}
+.pill{margin-left:auto;background:#193e55;border:1px solid #357475;color:#baf4de;border-radius:99px;padding:6px 10px;font-size:10px;white-space:nowrap}
+.hero{position:relative;overflow:hidden;border:1px solid #476588;border-radius:23px;background:radial-gradient(ellipse at 100% 8%,#fb8b365e,transparent 44%),linear-gradient(130deg,#173e64,#112942 75%);padding:24px 21px 21px;box-shadow:0 22px 55px #04112377}
+.hero:after{content:"";position:absolute;right:-24px;top:32px;width:135px;height:80px;transform:rotate(-21deg);border-top:9px solid #ff961a;border-bottom:5px solid #e5edf6;opacity:.22}
+.hero h1{position:relative;font-size:29px;line-height:1.18;margin:12px 0 9px;max-width:300px}
+.hero p{position:relative;color:#d2e2f5;max-width:450px;margin:0}
+.smalltag{display:inline-block;background:#ff931d22;color:#ffc16e;font-size:12px;font-weight:800;padding:5px 9px;border:1px solid #d888355b;border-radius:99px}
+.section{display:flex;justify-content:space-between;align-items:center;margin:22px 1px 12px;gap:10px}
+.section h2{font-size:16px;margin:0}
+.section small{color:var(--light);font-size:12px}
+.action{border-radius:16px;border:1px solid var(--line);text-decoration:none;display:flex;align-items:center;gap:13px;min-height:87px;padding:17px 15px;background:linear-gradient(120deg,#1b4066,#11304f);color:#f6faff;box-shadow:0 6px 22px #010c1a33}
+.action.real{background:linear-gradient(108deg,#ff9f2d,#ee780e);color:#192239;border-color:#ffc06d;box-shadow:0 9px 30px #dd740724}
+.action .em{font-size:28px;flex:0 0 35px;text-align:center}
+.action .copy{min-width:0;flex:1}.action strong{display:block;font-size:17px;line-height:1.3}
+.action small{display:block;font-size:12px;line-height:1.45;opacity:.85;margin-top:4px}
+.action .chevron{font-size:28px;opacity:.75}
+.install{display:block;width:100%;margin-top:14px;text-align:center;padding:14px 18px;border:1px solid #54769b;border-radius:15px;background:linear-gradient(115deg,#244c72,#173655);font-weight:900;color:#edf7ff}
+.install:focus-visible,.action:focus-visible{outline:3px solid #ffd091;outline-offset:3px}
+.install.installed{color:#8beec1;border-color:#397c64}
+.panel{margin-top:15px;border:1px solid #355676;border-radius:16px;background:#0c2947;padding:15px 17px}
+.panel h3{font-size:14px;margin:0 0 6px}.panel p{font-size:12px;line-height:1.65;color:#c6d9eb;margin:0}
+#installhelp{margin-top:12px;padding-top:10px;border-top:1px solid #33516c}
+#installhelp p{margin:5px 0}
+.sep{border:0;border-top:1px solid #24425f;margin:24px 0 14px}
+.foot{font-size:12px;color:#a7bed5;line-height:1.7;text-align:center}
+.status{color:#97eacb;font-weight:800;font-size:11px;margin-top:10px}
+.offline{color:#ffc47b}
+@media(min-width:550px){.hero h1{font-size:37px}.hero{padding:32px}.page{padding-top:30px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar"><div class="brandicon" aria-hidden="true"></div>
+    <div><div class="eyebrow">BM FUEL MANAGEMENT</div><strong>BM FUEL Mobile</strong></div><span class="pill" id="mode">PWA</span></div>
+  <section class="hero" aria-label="BM FUEL Mobile">
+    <span class="smalltag">⛽ แอปสำหรับ Android / iPhone</span>
+    <h1>จัดการปั๊มน้ำมัน<br>ได้จากโทรศัพท์</h1>
+    <p>เปิดระบบ BM FUEL ที่คุณใช้อยู่ พร้อมปุ่มเข้าสู่ Dashboard ที่คุณเลือก ดีไซน์น้ำเงินเข้ม–ส้ม</p>
+  </section>
+  <div class="section"><h2>เริ่มใช้งาน</h2><small>BM FUEL</small></div>
+  <a class="action real" id="liveApp" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">
+    <span class="em" aria-hidden="true">⛽</span><span class="copy"><strong>เปิดระบบ BM FUEL จริง</strong><small>เข้า Login เดิม บันทึกมิเตอร์ และใช้งาน Google Sheets ตามปกติ</small></span><span class="chevron" aria-hidden="true">›</span>
+  </a>
+  <div style="height:12px"></div>
+  <a class="action" href="../dashboard-preview.html" target="_blank" rel="noopener noreferrer">
+    <span class="em" aria-hidden="true">📊</span><span class="copy"><strong>ดูหน้า Dashboard V8.1</strong><small>ตัวอย่างดีไซน์กราฟเปรียบเทียบดีเซล–เบนซินเป็นลิตร (DEMO)</small></span><span class="chevron" aria-hidden="true">›</span>
+  </a>
+  <div class="section"><h2>ติดตั้งลงโทรศัพท์</h2></div>
+  <button type="button" id="installBtn" class="install">⬇ ติดตั้ง BM FUEL บนโทรศัพท์</button>
+  <div class="status" id="installStatus" role="status" aria-live="polite">เตรียมระบบติดตั้ง…</div>
+  <div class="panel">
+    <h3>วิธีติดตั้งแบบง่าย</h3>
+    <p>เปิดหน้านี้ใน <b>Google Chrome</b> แล้วกดปุ่มติดตั้งด้านบน หรือกดเมนู Chrome (⋮) → <b>ติดตั้งแอป</b> / <b>เพิ่มไปยังหน้าจอหลัก</b> จากนั้นเปิดไอคอน BM FUEL ที่หน้าจอโทรศัพท์</p>
+    <div id="installhelp" hidden>
+      <p><b>Android:</b> เปิดลิงก์นี้ใน Chrome โดยตรง (ไม่ใช่หน้าต่าง Google Apps Script) → กด ⋮ → ติดตั้งแอป / เพิ่มไปยังหน้าจอหลัก</p>
+      <p><b>iPhone:</b> เปิดใน Safari → แชร์ → Add to Home Screen / เพิ่มไปยังหน้าจอโฮม</p>
+      <p>หากมี BM FUEL แบบทางลัดเก่า ให้ลบทางลัดเก่าก่อนแล้วติดตั้งจากหน้านี้</p>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>ข้อมูลของคุณยังปลอดภัยในระบบเดิม</h3>
+    <p>แอปที่ติดตั้งจาก GitHub Pages นี้เป็น <b>ตัวเปิดระบบ (PWA Launcher)</b> เท่านั้น ไม่มีข้อมูลลูกค้า รหัสผ่าน ยอดขาย หรือ Google Sheets อยู่ใน GitHub การกดเปิดระบบจริงจะไปยัง Google Apps Script ซึ่งอาจแสดงแถบแจ้งเตือนของ Google ตามปกติ</p>
+    <p id="onlineStatus" class="status">กำลังตรวจสถานะอินเทอร์เน็ต…</p>
+  </div>
+  <hr class="sep">
+  <div class="foot">BM FUEL Management Mobile · PWA v1.0<br>เชื่อมต่อ Google Apps Script เดิม · ບໍລິຫານປ້ຳນ້ຳມັນ</div>
+</div>
+<script>
+(function(){
+ 'use strict';
+ var deferred=null, btn=document.getElementById('installBtn'),
+ status=document.getElementById('installStatus'),help=document.getElementById('installhelp'), mode=document.getElementById('mode');
+ function installed(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true}
+ function render(){
+   if(installed()){btn.textContent='✓ BM FUEL ติดตั้งบนเครื่องแล้ว';btn.classList.add('installed');status.textContent='ติดตั้งสำเร็จ — กด “เปิดระบบ BM FUEL จริง” เพื่อทำงาน';mode.textContent='ติดตั้งแล้ว';}
+   else if(deferred){btn.textContent='⬇ ติดตั้ง BM FUEL บนโทรศัพท์';status.textContent='พร้อมติดตั้ง: กดปุ่มด้านบนได้เลย';mode.textContent='Install';}
+   else{btn.textContent='⬇ วิธีติดตั้ง BM FUEL';status.textContent='หาก Chrome ยังไม่แสดงปุ่มติดตั้ง ใช้เมนู ⋮ ของ Chrome';mode.textContent='PWA';}
+ }
+ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;render()});
+ window.addEventListener('appinstalled',function(){deferred=null;render()});
+ btn.addEventListener('click',async function(){
+   if(installed()){document.getElementById('liveApp').focus();return;}
+   if(!deferred){help.hidden=false;help.scrollIntoView({behavior:'smooth',block:'nearest'});return;}
+   var prompt=deferred;deferred=null;
+   try{await prompt.prompt();var response=await prompt.userChoice;status.textContent=response.outcome==='accepted'?'ได้รับคำสั่งติดตั้งแล้ว กรุณาดูไอคอน BM FUEL':'ยังไม่ได้ติดตั้ง คุณสามารถติดตั้งจากเมนู Chrome ได้';}
+   catch(e){help.hidden=false;status.textContent='Chrome ไม่เปิดหน้าติดตั้ง โปรดใช้เมนู ⋮ → ติดตั้งแอป';}
+   render();
+ });
+ function online(){var x=document.getElementById('onlineStatus');x.textContent=navigator.onLine?'● เชื่อมต่ออินเทอร์เน็ตอยู่':'● ออฟไลน์ — เปิดระบบจริงต้องใช้อินเทอร์เน็ต';x.classList.toggle('offline',!navigator.onLine)}
+ window.addEventListener('online',online);window.addEventListener('offline',online);online();
+ if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(function(e){console.warn('SW:',e.message)})})}
+ render();
+})();
+</script>
+</body></html>
