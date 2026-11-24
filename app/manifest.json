@@ -2,11 +2,11 @@
   "id": "./index.html",
   "name": "BM FUEL Management",
   "short_name": "BM FUEL",
-  "description": "ระบบบริหารจัดการปั๊มน้ำมันบนมือถือ — เวอร์ชันต้นแบบ PWA พร้อมโหมด DEMO",
+  "description": "BM FUEL Management — ต้นแบบแอป PWA เต็มจอ Android/iPhone (DEMO ยังไม่เชื่อมข้อมูลจริง)",
   "lang": "th",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#07172b",
   "theme_color": "#07172b",
   "orientation": "portrait",
@@ -34,5 +34,9 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "display_override": [
+    "fullscreen",
+    "standalone"
   ]
 }
