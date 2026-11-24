@@ -42,7 +42,8 @@
         <button class="btn-muted" type="submit" disabled>เข้าสู่ระบบจริง (ยังไม่เปิด)</button>
       </form>
       <button class="btn-primary btn-block" id="enterDemo" type="button">ดูตัวอย่างแอป BM FUEL <span aria-hidden="true">→</span></button>
-      <button class="btn-outline btn-block" id="installEntry" type="button">＋ ติดตั้งไอคอน BM FUEL</button>
+      <button class="btn-outline btn-block" id="installEntry" type="button">＋ ติดตั้ง BM FUEL แบบเต็มจอ</button>
+      <p id="displayModeInfo" class="install-guide" role="status" aria-live="polite"></p>
       <p class="install-guide" id="installGuide" hidden>Android: เปิดใน Chrome → เมนู ⋮ → ติดตั้งแอป / เพิ่มไปยังหน้าจอหลัก<br>iPhone: เปิดใน Safari → แชร์ → เพิ่มไปยังหน้าจอโฮม</p>
       <a class="real-link" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec" target="_blank" rel="noopener noreferrer">เปิดระบบ BM FUEL เดิมที่ใช้งานจริง <span aria-hidden="true">↗</span></a>
     </div>
@@ -159,7 +160,8 @@
       <section class="view" id="view-settings" aria-labelledby="settings-title">
         <div class="page-heading"><div class="mini-overline">OWNER SETTINGS</div><h2 id="settings-title">ตั้งค่าแอป</h2><p>จัดการการติดตั้ง การเชื่อมต่อ และบัญชีผู้ใช้</p></div>
         <div class="settings-card"><div class="settings-line"><span>เวอร์ชันแอป</span><strong>BM FUEL PWA v2.0 · DEMO</strong></div><div class="settings-line"><span>สถานะฐานข้อมูล</span><strong class="not-ready">ยังไม่เชื่อมต่อ</strong></div><div class="settings-line"><span>Google Sheets</span><strong>ยังไม่อ่านข้อมูลจริง</strong></div><div class="settings-line"><span>โหมดแอป</span><strong>หน้าแอปติดตั้งได้</strong></div></div>
-        <button class="btn-outline btn-block" id="installSettings" type="button">＋ ติดตั้ง BM FUEL ลงหน้าจอ Home</button>
+        <button class="btn-outline btn-block" id="installSettings" type="button">＋ ติดตั้ง BM FUEL แบบเต็มจอ</button>
+        <div class="settings-card"><h3>สถานะการแสดงผล</h3><p id="displayModeDetails">กำลังตรวจว่าเปิดจากไอคอน Home หรือเบราว์เซอร์...</p><p>หากยังเห็นแถบ URL ให้ติดตั้ง PWA จากลิงก์หน้านี้ แล้วเปิดผ่านไอคอน BM FUEL บนหน้าจอ Home; การเปิดระบบ Google Apps Script เดิมจะเป็นลิงก์ภายนอก</p></div>
         <div class="settings-card"><h3>ระบบบัญชีและรหัสผ่าน</h3><p>การเปลี่ยนรหัส การกู้รหัส และจัดการสิทธิ์พนักงาน ต้องทำผ่าน Backend ที่ตรวจสิทธิ์จริง ขณะนี้ไม่เปิดรับรหัสผ่านบน GitHub</p><a class="real-link" target="_blank" rel="noopener noreferrer" href="https://script.google.com/macros/s/AKfycbyyebQBgsCyX0BwYCH8Vls9KHb08tTRXKOWT1j2R38KadQqpaUIraXBOyMqFHeHHwbk/exec">เปิดระบบปัจจุบันใน Google Apps Script ↗</a></div>
         <div class="settings-card"><h3>แนวทางเชื่อมระบบ Production</h3><p>ต้องสร้าง API ผ่าน HTTPS ที่อนุญาต Origin ของ GitHub Pages อย่างเจาะจง ตรวจเซสชันและสิทธิ์ผู้ใช้ทุกคำขอ ไม่ฝังรหัสผ่านหรือ Google Service Account ในเว็บสาธารณะ</p></div>
         <button id="leaveDemo" type="button" class="btn-muted btn-block">ออกจากตัวอย่างแอป</button>
