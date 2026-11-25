@@ -35,12 +35,12 @@ test('login is real server-side verification; logout revokes access',async()=>ha
  assert.equal((await r('/v1/logout',{method:'POST',token:tok})).status,200);
  assert.equal((await r('/v1/me',{token:tok})).status,401);
 }));
-test('staging meter writes remain ephemeral and cannot contain photo data',async()=>harness(async r=>{
+test('staging numeric meter writes remain ephemeral when Sheets is not connected',async()=>harness(async r=>{
  const login=await r('/v1/login',{method:'POST',body:{username:options.username,password:options.password}});const token=login.data.accessToken;
  const bad=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'12',closing:'10'}});
  assert.equal(bad.status,400);
  const photo=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10',closing:'12',openPhoto:'image'}});
- assert.equal(photo.status,503);
+ assert.equal(photo.status,400);
  const good=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10.125',closing:'12.625'}});
  assert.equal(good.status,201);assert.equal(good.data.record.liters,2.5);assert.equal(good.data.persisted,false);
  const rec=await r('/v1/meters',{token});assert.equal(rec.data.records.length,1);
@@ -54,36 +54,43 @@ test('missing or weak credentials prevent server startup',()=>{
  assert.throws(()=>createStagingServer({username:'x',password:'strong-password-for-test',origin:'*'}),/Unsafe/);
 });
 
-test('photo uploads require isolated staging Google configuration',async()=>harness(async r=>{
+test('without Google credentials, numeric meter saving is allowed only as an ephemeral sample',async()=>harness(async r=>{
  const login=await r('/v1/login',{method:'POST',body:{username:options.username,password:options.password}});
  const token=login.data.accessToken;
  const status=await r('/v1/storage-status',{token});
  assert.equal(status.status,200);assert.equal(status.data.storage,'memory-only');
- const photo=await r('/v1/meters',{method:'POST',token,body:{
-   nozzle:1,date:'2026-11-25',opening:'1',closing:'2',openPhoto:'data:image/jpeg;base64,AA=='
+ assert.equal(status.data.photoEvidence,false);
+ const bad=await r('/v1/meters',{method:'POST',token,body:{
+   nozzle:1,date:'2026-11-25',opening:'1',closing:'2',openPhoto:'fake-image'
  }});
- assert.equal(photo.status,503);
+ assert.equal(bad.status,400);
+ const ok=await r('/v1/meters',{method:'POST',token,body:{
+   nozzle:1,date:'2026-11-25',opening:'1',closing:'2'
+ }});
+ assert.equal(ok.status,201);assert.equal(ok.data.persisted,false);
+ const duplicate=await r('/v1/meters',{method:'POST',token,body:{
+   nozzle:1,date:'2026-11-25',opening:'2',closing:'3'
+ }});
+ assert.equal(duplicate.status,409);
 }));
-test('authenticated STAGING Sheets/Drive mock saves two photo evidence objects',async()=>{
+test('authenticated STAGING Google Sheets mock saves numeric-only meters',async()=>{
  const {createGoogleStagingStore}=await import('./google-storage.mjs');
  assert.equal(createGoogleStagingStore({}),null);
- assert.throws(()=>createGoogleStagingStore({BM_STAGING_SHEET_ID:'STAGINGONLYRESOURCEID'}),/Incomplete/);
- let records=[],verifyCalls=0,saveCalls=0,photoReads=0;
+ assert.throws(()=>createGoogleStagingStore({BM_STAGING_SHEET_ID:'OTHER_SHEET_RESOURCE_ID'}),/Incomplete/);
+ const records=[];
+ let verifyCalls=0,saveCalls=0;
  const storage={
    async verify(){verifyCalls++;return true;},
    async listRecords(){return records;},
-   async saveRecord(record,opening,closing){
+   async saveRecord(record){
      saveCalls++;
-     assert.equal(opening[0],0xff);assert.equal(closing[1],0xd8);
+     assert.equal(record.nozzle,2);
+     assert.equal(Object.hasOwn(record,'openPhoto'),false);
      assert.ok(!records.some(x=>x.nozzle===record.nozzle&&x.date===record.date));
-     const saved={...record,persisted:true,source:'google-staging',hasOpenPhoto:true,hasClosePhoto:true,
-       _openPhotoId:'PHOTOIDOPEN123456789',_closePhotoId:'PHOTOIDCLOSE123456789'};
+     const saved={...record,persisted:true,source:'google-staging'};
      records.push(saved);return saved;
-   },
-   async readPhoto(){photoReads++;return jpegBytes;}
+   }
  };
- const jpegBytes=Buffer.concat([Buffer.from([0xff,0xd8]),Buffer.alloc(120),Buffer.from([0xff,0xd9])]);
- const image='data:image/jpeg;base64,'+jpegBytes.toString('base64');
  const server=createStagingServer({...options,storage});
  server.listen(0,'127.0.0.1');await once(server,'listening');
  const base='http://127.0.0.1:'+server.address().port;
@@ -91,29 +98,36 @@ test('authenticated STAGING Sheets/Drive mock saves two photo evidence objects',
    const headers={Origin:options.origin};if(token)headers.Authorization='Bearer '+token;
    if(body!==undefined)headers['Content-Type']='application/json';
    const res=await fetch(base+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});
-   let data=undefined; if(res.headers.get('content-type')?.includes('application/json'))data=await res.json();
-   return {status:res.status,data,headers:res.headers};
+   return {status:res.status,data:await res.json()};
  }
  try{
-   const unauthorized=await q('/v1/storage-status');assert.equal(unauthorized.status,401);
+   assert.equal((await q('/v1/storage-status')).status,401);
    const login=await q('/v1/login',{method:'POST',body:{username:options.username,password:options.password}});
    const token=login.data.accessToken;
    const status=await q('/v1/storage-status',{token});
-   assert.equal(status.data.storage,'google-staging');assert.equal(status.data.persisted,true);
+   assert.equal(status.data.storage,'google-staging');
+   assert.equal(status.data.persisted,true);
+   assert.equal(status.data.photoEvidence,false);
    assert.equal(verifyCalls,1);
-   const record={nozzle:2,date:'2026-11-25',opening:'100.125',closing:'102.625',openPhoto:image,closePhoto:image};
-   const bad=await q('/v1/meters',{method:'POST',token,body:{...record,closePhoto:'data:image/png;base64,AAAA'}});
-   assert.equal(bad.status,400);assert.equal(saveCalls,0);
+   const record={nozzle:2,date:'2026-11-25',opening:'100.125',closing:'102.625'};
+   const invalid=await q('/v1/meters',{method:'POST',token,body:{...record,closePhoto:'not-needed'}});
+   assert.equal(invalid.status,400);
+   assert.equal(saveCalls,0);
    const saved=await q('/v1/meters',{method:'POST',token,body:record});
    assert.equal(saved.status,201);assert.equal(saved.data.persisted,true);
    assert.equal(saved.data.record.liters,2.5);assert.equal(saveCalls,1);
    const list=await q('/v1/meters',{token});
    assert.equal(list.status,200);assert.equal(list.data.records.length,1);
-   assert.equal(list.data.records[0]._openPhotoId,undefined);
-   const photo=await q('/v1/meter-photos/'+saved.data.record.id+'/open',{token});
-   assert.equal(photo.status,200);assert.equal(photo.headers.get('content-type'),'image/jpeg');assert.equal(photoReads,1);
-   assert.equal((await q('/v1/meter-photos/'+saved.data.record.id+'/open')).status,401);
+   assert.equal(list.data.records[0].hasOpenPhoto,undefined);
+   assert.equal((await q('/v1/meter-photos/'+saved.data.record.id+'/open',{token})).status,404);
  }finally{await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));}
+});
+test('STAGING Google Sheets target is locked to approved ID',async()=>{
+ const {createGoogleStagingStore}=await import('./google-storage.mjs');
+ const creds=JSON.stringify({type:'authorized_user',client_id:'fake',client_secret:'fake',refresh_token:'fake'});
+ assert.throws(()=>createGoogleStagingStore({
+   BM_STAGING_GOOGLE_AUTH_JSON:creds,BM_STAGING_SHEET_ID:'PRODUCTION_OTHER_SHEET_ID'
+ }),/Refusing to access any spreadsheet outside approved/);
 });
 test('fail-closed when STAGING Google credentials are only partially set',async()=>{
  const {createGoogleStagingStore}=await import('./google-storage.mjs');

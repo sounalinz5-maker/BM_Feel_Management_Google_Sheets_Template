@@ -5,10 +5,9 @@ import {createGoogleStagingStore} from './google-storage.mjs';
 import {demoSeries,demoTanks,demoActivity,demoDailyLak,demoReceipts} from '../app/demo-data.mjs';
 import {meterDifference,NOZZLES,sumByFuel} from '../app/logic.mjs';
 
-// Staging-only, ephemeral server. Does NOT connect to Google Sheets or Drive.
+// STAGING-only sample server. Uses temporary memory unless explicit isolated Google Sheets credentials are configured.
 // Use HTTPS at the public edge (e.g. via an approved HTTPS hosting service).
-const SESSION_MS = 6*60*60*1000, BODY_LIMIT = 8192, IMAGE_BODY_LIMIT=2*1024*1024, LOGIN_LIMIT = 5;
-const MAX_PHOTO_BYTES=650*1024;
+const SESSION_MS = 6*60*60*1000, BODY_LIMIT = 8192, LOGIN_LIMIT = 5;
 function sha(value){return createHash('sha256').update(String(value)).digest('hex');}
 function bodyJson(req,limit=BODY_LIMIT){
   return new Promise((resolve,reject)=>{
@@ -22,16 +21,6 @@ function bodyJson(req,limit=BODY_LIMIT){
     req.on('end',()=>{if(done)return;try{resolve(JSON.parse(data||'{}'));}catch{reject(Object.assign(new Error('Invalid JSON'),{status:400}));}});
     req.on('error',err=>{if(!done)reject(err);});
   });
-}
-function decodeJpeg(input) {
-  if(typeof input!=='string')throw Object.assign(new Error('Two JPEG photos are required'),{status:400});
-  const match=/^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/i.exec(input);
-  if(!match)throw Object.assign(new Error('Only JPEG photo evidence is supported'),{status:400});
-  const bytes=Buffer.from(match[1],'base64');
-  if(bytes.length<100 || bytes.length>MAX_PHOTO_BYTES || bytes[0]!==0xff || bytes[1]!==0xd8 || bytes[bytes.length-2]!==0xff || bytes[bytes.length-1]!==0xd9){
-    throw Object.assign(new Error('Invalid JPEG photo or too large (max 650KB each)'),{status:400});
-  }
-  return bytes;
 }
 function send(res,status,payload,headers={}){
   const raw=JSON.stringify(payload);
@@ -65,7 +54,7 @@ export function createStagingServer({
     const url=new URL(req.url||'/', 'http://localhost');
     const route=url.pathname;
     try{
-      if(route==='/v1/health'&&req.method==='GET')return send(res,200,{ok:true,service:'bm-fuel-staging',mode:'sample-only',auth:true,photoEvidence:!!store},headers);
+      if(route==='/v1/health'&&req.method==='GET')return send(res,200,{ok:true,service:'bm-fuel-staging',mode:'sample-only',auth:true,photoEvidence:false},headers);
       if(route==='/v1/login'&&req.method==='POST'){
         const ip=req.socket.remoteAddress||'unknown',now=clock();
         const prev=attempts.get(ip)||{since:now,count:0};
@@ -92,7 +81,7 @@ export function createStagingServer({
       if(route==='/v1/me'&&req.method==='GET')return send(res,200,{ok:true,user:{displayName:'Staging Owner',role:session.role},mode:'sample-only'},headers);
       if(route==='/v1/storage-status'&&req.method==='GET'){
         if(!store)return send(res,200,{ok:true,mode:'sample-only',storage:'memory-only',photoEvidence:false,persisted:false},headers);
-        try{await store.verify();return send(res,200,{ok:true,mode:'sample-only',storage:'google-staging',photoEvidence:true,persisted:true},headers);}
+        try{await store.verify();return send(res,200,{ok:true,mode:'sample-only',storage:'google-staging',photoEvidence:false,persisted:true},headers);}
         catch(error){return send(res,503,{ok:false,mode:'sample-only',error:'STAGING Google Sheets/Drive has not been verified'},headers);}
       }
       if(route==='/v1/dashboard'&&req.method==='GET'){
@@ -105,33 +94,19 @@ export function createStagingServer({
       if(route==='/v1/meters'&&req.method==='GET')
         return send(res,200,{ok:true,mode:'sample-only',storage:store?'google-staging':'memory-only',
           records:(store?await store.listRecords():meters).slice(-50).map(({_openPhotoId,_closePhotoId,...safe})=>safe)},headers);
-      if(route.startsWith('/v1/meter-photos/')&&req.method==='GET'){
-        if(!store)return send(res,404,{error:'Photo storage is not configured'},headers);
-        const found=/^\/v1\/meter-photos\/([a-f0-9-]{32,36})\/(open|close)$/i.exec(route);
-        if(!found)return send(res,404,{error:'Photo not found'},headers);
-        const records=await store.listRecords();
-        const record=records.find(x=>x.id===found[1]);
-        if(!record)return send(res,404,{error:'Photo not found'},headers);
-        const photoId=found[2]==='open'?record._openPhotoId:record._closePhotoId;
-        const bytes=await store.readPhoto(photoId);
-        res.writeHead(200,{...headers,'Content-Type':'image/jpeg','Content-Length':bytes.length,
-          'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
-        res.end(bytes);return;
-      }
       if(route==='/v1/meters'&&req.method==='POST'){
-        const m=await bodyJson(req,store?IMAGE_BODY_LIMIT:BODY_LIMIT);
+        const m=await bodyJson(req);
         const nozzle=Number(m.nozzle),nozzleSpec=NOZZLES.find(n=>n.id===nozzle);
         const date=String(m.date||'');
         const quantity=meterDifference(m.opening,m.closing);
         if(!nozzleSpec||!quantity.ok||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T00:00:00Z')))
           return send(res,400,{error:'Invalid nozzle/date/meter reading'},headers);
-        if(m.image)return send(res,400,{error:'Unsupported photo field'},headers);
-        if(!store&&(m.openPhoto||m.closePhoto))return send(res,503,{error:'STAGING Google Sheets/Drive must be configured before accepting photo evidence'},headers);
+        if('image' in m || 'openPhoto' in m || 'closePhoto' in m)
+          return send(res,400,{error:'Photo fields are not supported for meter records'},headers);
         const saved={id:randomBytes(16).toString('hex'),nozzle,date,fuel:nozzleSpec.fuel,
           opening:quantity.opening,closing:quantity.closing,liters:quantity.liters,createdAt:new Date(clock()).toISOString()};
         if(store){
-          const openPhoto=decodeJpeg(m.openPhoto),closePhoto=decodeJpeg(m.closePhoto);
-          const persisted=await store.saveRecord(saved,openPhoto,closePhoto);
+          const persisted=await store.saveRecord(saved);
           return send(res,201,{ok:true,mode:'sample-only',persisted:true,storage:'google-staging',record:persisted},headers);
         }
         if(meters.some(x=>x.nozzle===nozzle && x.date===date))

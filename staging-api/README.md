@@ -1,3 +1,7 @@
+## Current scope: numeric-only meter entry (2026-11-25)
+
+Photo upload and camera support have been removed from the STAGING UI, API, and Google Sheets integration at the owner's request. Meter_Log now has ten columns: Submission_ID, Date, Nozzle, Fuel, Opening_L, Closing_L, Volume_L, Created_At, Source, Operator. The Google Sheets destination is hard-locked in code to the separate, approved STAGING ID. Railway's absence of Google credentials means numeric sample submissions are accepted in RAM only, and they are lost on redeploy or restart. No production data should be entered. When a dedicated, authorized STAGING-only Google Sheets OAuth or service account is available, the same form will save numeric readings without photos into Meter_Log. Never connect a production credential or sheet ID.
+
 # BM FUEL — isolated staging API & full-screen PWA
 
 **Current state:** The interface and API implementation are committed to source. GitHub Pages hosts the **static staging UI only**. It DOES NOT host the Node.js API. Until a separate HTTPS host is configured, the login remains inaccessible, and no "connected" status should be claimed.

@@ -38,11 +38,6 @@
 .remember-line{display:flex!important;align-items:center;gap:9px;cursor:pointer;margin:17px 0 3px!important;font-size:13px!important}
 .remember-line input{width:19px!important;height:19px;flex:none;accent-color:#ff9c2b;display:inline-block!important;margin:0!important}
 .remember-line span{font-weight:500}
-.photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:13px 0}
-.photo-card{border:1px dashed #7496b6;border-radius:12px;padding:9px;background:#09233c;overflow:hidden}
-.photo-card label{display:block;margin:2px 0 9px}
-.photo-card input[type=file]{font-size:12px;padding:7px;color:#dceefe;background:transparent;width:100%;border:0}
-.photo-card img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#071b2f;border-radius:8px}
 .s-warn{background:#392919!important;border:1px solid #a47736;color:#ffd8a0!important}
 .s-settings-toggle{font-size:12px;border:0;background:transparent;color:#a7bfda;text-decoration:underline;cursor:pointer;margin:0 auto;display:block;padding:15px}
 [hidden]{display:none!important}
@@ -73,15 +68,14 @@
 <h3>กราฟจำนวนลิตร 7 วัน</h3><div id="barChart" role="img" aria-label="เปรียบเทียบดีเซลและเบนซินจากข้อมูลตัวอย่าง"></div>
 <div class="s-btn-row"><button type="button" class="btn-outline" id="refresh">รีเฟรชข้อมูล</button><button type="button" class="btn-muted" id="logout">ออกจากระบบ</button></div>
 </section>
-<section id="meter" class="s-card" hidden><h2>3. บันทึกมิเตอร์พร้อมรูปถ่าย (STAGING)</h2>
+<section id="meter" class="s-card" hidden><h2>3. บันทึกมิเตอร์ 6 หัวจ่าย (STAGING)</h2>
 <form id="meterForm">
 <div class="s-numbers"><label>หัวจ่าย<select id="nozzle" required style="width:100%;background:#071f39;color:white;padding:12px;border:1px solid #446887;border-radius:9px"><option value="1">1 · ดีเซล</option><option value="2">2 · ดีเซล</option><option value="3">3 · ดีเซล</option><option value="4">4 · เบนซิน</option><option value="5">5 · เบนซิน</option><option value="6">6 · เบนซิน</option></select></label><label>วันที่<input id="meterDate" type="date" required></label></div>
 <div class="s-numbers"><label>มิเตอร์เปิด<input id="meterOpen" inputmode="decimal" placeholder="100.000" required></label><label>มิเตอร์ปิด<input id="meterClose" inputmode="decimal" placeholder="102.500" required></label></div>
 <div class="s-status" id="meterCalculation">ปริมาณขาย = มิเตอร์ปิด − มิเตอร์เปิด</div>
-<div id="storageStatus" class="s-status s-warn">กำลังตรวจสอบที่จัดเก็บรูปและมิเตอร์ STAGING…</div>
-<div class="photo-grid"><div class="photo-card"><label for="photoOpen">📷 รูปมิเตอร์เปิด</label><input id="photoOpen" type="file" accept="image/*" capture="environment"><img id="previewOpen" alt="รูปมิเตอร์เปิด" hidden></div><div class="photo-card"><label for="photoClose">📷 รูปมิเตอร์ปิด</label><input id="photoClose" type="file" accept="image/*" capture="environment"><img id="previewClose" alt="รูปมิเตอร์ปิด" hidden></div></div>
-<button class="btn-primary btn-block" id="submitMeter" type="submit" disabled>บันทึกมิเตอร์และรูปถ่ายลง STAGING</button>
-</form><p><strong>เฉพาะบัญชี Google STAGING เท่านั้น</strong> ระบบจะเปิดปุ่มบันทึกหลังยืนยัน Google Sheets และโฟลเดอร์ Drive แยกจากระบบจริงได้แล้ว รูปถ่ายสองภาพจำเป็นสำหรับการบันทึก</p>
+<div id="storageStatus" class="s-status s-warn">กำลังตรวจสอบที่จัดเก็บมิเตอร์ STAGING…</div>
+<button class="btn-primary btn-block" id="submitMeter" type="submit">บันทึกมิเตอร์ทดสอบ</button>
+</form><p><strong>ไม่ต้องแนบรูปถ่าย</strong> ถ้าเชื่อม Google Sheets STAGING สำเร็จ ระบบจะบันทึกถาวรลงชีต หากยังไม่เชื่อม จะบันทึกเฉพาะข้อมูลทดสอบชั่วคราวซึ่งอาจหายเมื่อเซิร์ฟเวอร์รีสตาร์ต ห้ามใช้ยอดจริง</p>
 <div id="meterResult" class="s-status" role="status">ยังไม่มีรายการทดสอบ</div>
 <h3>รายการจำลองที่บันทึก</h3><div id="meterList">—</div>
 </section>
