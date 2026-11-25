@@ -12,7 +12,9 @@ if(!access_token)throw Error('No Google access token');
 const base='https://script.googleapis.com/v1/projects/'+encodeURIComponent(id);
 async function get(suffix=''){const r=await fetch(base+suffix,{headers:{Authorization:'Bearer '+access_token}});if(!r.ok)throw Error('Apps Script preflight failed ('+r.status+')');return r.json();}
 const p=await get();
-if(p.title!=='BM FUEL STAGING - GitHub' || p.parentId!=='1OslhbqwN_CQaMEWG92Ktu7OaeJSdEigNSIe8RHry0hU')throw Error('Refusing target: expected dedicated script attached to approved STAGING sheet.');
+if(p.scriptId!==id||p.title!=='BM FUEL STAGING - GitHub'||p.parentId)throw Error('Refusing target: expected the exact configured standalone STAGING script.');
+const localCode=fs.readFileSync('Code.gs','utf8');
+if(!localCode.includes("const STAGING_ID='1OslhbqwN_CQaMEWG92Ktu7OaeJSdEigNSIe8RHry0hU';")||!localCode.includes('APPS_SCRIPT_STAGING_SAMPLE'))throw Error('Local STAGING spreadsheet guard missing.');
 const {files=[]}=await get('/content');
 const code=files.find(f=>f.name==='Code'&&f.type==='SERVER_JS');
 const known=code?.source?.includes('APPS_SCRIPT_STAGING_SAMPLE')&&code.source.includes('1OslhbqwN_CQaMEWG92Ktu7OaeJSdEigNSIe8RHry0hU');
@@ -27,4 +29,4 @@ const existing=deployments[0]?.deploymentId||'';
 if(existing&&!/^[A-Za-z0-9_-]+$/.test(existing))throw Error('Unexpected deployment identifier');
 fs.appendFileSync(process.env.GITHUB_OUTPUT,'deployment_id='+existing+'\n');
 fs.writeFileSync('.clasp.json',JSON.stringify({scriptId:id,rootDir:'.'}),{mode:0o600});
-console.log('Verified exact STAGING spreadsheet parent, project title and remote code.');
+console.log('Verified exact configured standalone STAGING project, project title, remote code and local spreadsheet guard.');
