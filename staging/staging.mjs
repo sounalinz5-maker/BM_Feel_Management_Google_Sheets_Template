@@ -38,7 +38,7 @@ function reset(){
  accessToken='';accessExpiry=0;
  $('dashboard').hidden=true;$('meter').hidden=true;$('auth').hidden=false;
  googleStorageReady=false;
- $('submitMeter').disabled=false;
+ $('submitMeter').disabled=true;
  $('setup').hidden=true;
  $('sPassword').value='';
 }
@@ -120,17 +120,18 @@ $('logout').addEventListener('click',async()=>{
 });
 async function checkStagingStorage(){
   googleStorageReady=false;
-  $('submitMeter').disabled=false;
-  status('storageStatus','กำลังตรวจสอบพื้นที่จัดเก็บ STAGING…');
+  $('submitMeter').disabled=true;
+  status('storageStatus','กำลังตรวจสอบสิทธิ์ Google Sheets STAGING…');
   try{
     const data=await request('/v1/storage-status');
     if(data.storage==='google-staging'&&data.persisted===true){
       googleStorageReady=true;
-      status('storageStatus','● พร้อมบันทึกลง Google Sheets STAGING ถาวร',true);
+      $('submitMeter').disabled=false;
+      status('storageStatus','● เชื่อม Google Sheets STAGING สำเร็จ บันทึกข้อมูลถาวรได้',true);
     }else{
-      status('storageStatus','โหมดทดลอง: บันทึกชั่วคราวบน Railway เท่านั้น ข้อมูลหายได้หลังรีสตาร์ตเซิร์ฟเวอร์',false);
+      status('storageStatus','ยังไม่ได้เชื่อม Google Sheets STAGING — ปิดปุ่มบันทึกเพื่อป้องกันข้อมูลสูญหาย',false);
     }
-  }catch(e){status('storageStatus','ยังไม่ได้ยืนยัน Google Sheets: '+err(e)+' — ทดลองบันทึกชั่วคราวได้',false);}
+  }catch(e){status('storageStatus','ยังไม่ได้ยืนยัน Google Sheets: '+err(e)+' — ไม่สามารถบันทึกข้อมูลได้',false);}
 }
 function meterCalc(){
  const result=meterDifference($('meterOpen').value,$('meterClose').value);
@@ -140,10 +141,10 @@ $('meterOpen').addEventListener('input',meterCalc);
 $('meterClose').addEventListener('input',meterCalc);
 $('meterForm').addEventListener('submit',async e=>{
  e.preventDefault();
+ if(!googleStorageReady){status('meterResult','Google Sheets STAGING ยังไม่พร้อม — ยังไม่มีการบันทึกข้อมูล',false);return;}
  const calculation=meterDifference($('meterOpen').value,$('meterClose').value);
  if(!calculation.ok){status('meterResult',calculation.error,false);return;}
- const mode=googleStorageReady?'Google Sheets STAGING':'Railway ชั่วคราว';
- if(!window.confirm('ยืนยันบันทึกข้อมูลมิเตอร์ทดสอบลง '+mode+'? ห้ามกรอกข้อมูลยอดขายจริง'))return;
+ if(!window.confirm('ยืนยันบันทึกมิเตอร์ทดสอบลง Google Sheets STAGING เท่านั้น?'))return;
  if(busy)return;busy=true;$('submitMeter').disabled=true;
  try{
   status('meterResult','กำลังส่งข้อมูลมิเตอร์ไป STAGING…');
@@ -151,15 +152,13 @@ $('meterForm').addEventListener('submit',async e=>{
     nozzle:Number($('nozzle').value),date:$('meterDate').value,
     opening:calculation.opening,closing:calculation.closing
   }});
-  if(googleStorageReady&&r.persisted!==true)
+  if(r.persisted!==true||r.storage!=='google-staging')
     throw new Error('ระบบไม่ยืนยันการบันทึกถาวรลง Google Sheets');
-  status('meterResult',r.persisted===true
-    ? 'บันทึกลง Google Sheets STAGING สำเร็จ: หัว '+r.record.nozzle+' · '+formatLiters(r.record.liters)+' ลิตร'
-    : 'บันทึกชั่วคราวสำเร็จ: หัว '+r.record.nozzle+' · '+formatLiters(r.record.liters)+' ลิตร (ข้อมูลอาจหายเมื่อรีสตาร์ต)',r.persisted===true);
+  status('meterResult','บันทึกลง Google Sheets STAGING สำเร็จ: หัว '+r.record.nozzle+' · '+formatLiters(r.record.liters)+' ลิตร',true);
   $('meterForm').reset();$('meterDate').value=today();
   await refresh();
  }catch(error){status('meterResult','บันทึกไม่สำเร็จ: '+err(error),false);}
- finally{busy=false;$('submitMeter').disabled=false;}
+ finally{busy=false;$('submitMeter').disabled=!googleStorageReady;}
 });
 
 $('meterDate').value=today();

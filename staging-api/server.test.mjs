@@ -35,15 +35,14 @@ test('login is real server-side verification; logout revokes access',async()=>ha
  assert.equal((await r('/v1/logout',{method:'POST',token:tok})).status,200);
  assert.equal((await r('/v1/me',{token:tok})).status,401);
 }));
-test('staging numeric meter writes remain ephemeral when Sheets is not connected',async()=>harness(async r=>{
- const login=await r('/v1/login',{method:'POST',body:{username:options.username,password:options.password}});const token=login.data.accessToken;
- const bad=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'12',closing:'10'}});
- assert.equal(bad.status,400);
- const photo=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10',closing:'12',openPhoto:'image'}});
- assert.equal(photo.status,400);
- const good=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10.125',closing:'12.625'}});
- assert.equal(good.status,201);assert.equal(good.data.record.liters,2.5);assert.equal(good.data.persisted,false);
- const rec=await r('/v1/meters',{token});assert.equal(rec.data.records.length,1);
+test('numeric records cannot be saved without confirmed Google Sheets STAGING',async()=>harness(async r=>{
+ const login=await r('/v1/login',{method:'POST',body:{username:options.username,password:options.password}});
+ const token=login.data.accessToken;
+ const wrong=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10',closing:'9'}});
+ assert.equal(wrong.status,400);
+ const ok=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10.125',closing:'12.625'}});
+ assert.equal(ok.status,503);assert.match(ok.data.error,/Google Sheets STAGING/);
+ const list=await r('/v1/meters',{token});assert.equal(list.data.records.length,0);
 }));
 test('login attempts are rate-limited',async()=>harness(async r=>{
  for(let i=0;i<5;i++)assert.equal((await r('/v1/login',{method:'POST',body:{username:'no',password:'bad'}})).status,401);
@@ -54,24 +53,15 @@ test('missing or weak credentials prevent server startup',()=>{
  assert.throws(()=>createStagingServer({username:'x',password:'strong-password-for-test',origin:'*'}),/Unsafe/);
 });
 
-test('without Google credentials, numeric meter saving is allowed only as an ephemeral sample',async()=>harness(async r=>{
+test('storage status stays unverified and returns no temporary meter data',async()=>harness(async r=>{
  const login=await r('/v1/login',{method:'POST',body:{username:options.username,password:options.password}});
  const token=login.data.accessToken;
  const status=await r('/v1/storage-status',{token});
- assert.equal(status.status,200);assert.equal(status.data.storage,'memory-only');
- assert.equal(status.data.photoEvidence,false);
- const bad=await r('/v1/meters',{method:'POST',token,body:{
-   nozzle:1,date:'2026-11-25',opening:'1',closing:'2',openPhoto:'fake-image'
- }});
- assert.equal(bad.status,400);
- const ok=await r('/v1/meters',{method:'POST',token,body:{
-   nozzle:1,date:'2026-11-25',opening:'1',closing:'2'
- }});
- assert.equal(ok.status,201);assert.equal(ok.data.persisted,false);
- const duplicate=await r('/v1/meters',{method:'POST',token,body:{
-   nozzle:1,date:'2026-11-25',opening:'2',closing:'3'
- }});
- assert.equal(duplicate.status,409);
+ assert.equal(status.status,200);assert.equal(status.data.storage,'google-not-connected');assert.equal(status.data.persisted,false);
+ const photo=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'1',closing:'2',openPhoto:'sample'}});
+ assert.equal(photo.status,400);
+ const numeric=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'1',closing:'2'}});
+ assert.equal(numeric.status,503);
 }));
 test('authenticated STAGING Google Sheets mock saves numeric-only meters',async()=>{
  const {createGoogleStagingStore}=await import('./google-storage.mjs');

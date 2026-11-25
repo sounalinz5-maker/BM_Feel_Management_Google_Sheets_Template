@@ -40,7 +40,7 @@ export function createStagingServer({
   if(!/^https:\/\/[a-z0-9.-]+(?::\d+)?$/.test(origin)&&!/^http:\/\/localhost(?::\d+)?$/.test(origin))throw Error('Unsafe staging browser origin');
   const salt=randomBytes(32);
   const passwordHash=scryptSync(password,salt,64);
-  const sessions=new Map(), attempts=new Map(), meters=[];
+  const sessions=new Map(), attempts=new Map();
   const store=storage===undefined ? createGoogleStagingStore() : storage;
   const server=createServer(async(req,res)=>{
     const requestOrigin=req.headers.origin;
@@ -80,20 +80,20 @@ export function createStagingServer({
       }
       if(route==='/v1/me'&&req.method==='GET')return send(res,200,{ok:true,user:{displayName:'Staging Owner',role:session.role},mode:'sample-only'},headers);
       if(route==='/v1/storage-status'&&req.method==='GET'){
-        if(!store)return send(res,200,{ok:true,mode:'sample-only',storage:'memory-only',photoEvidence:false,persisted:false},headers);
+        if(!store)return send(res,200,{ok:true,mode:'sample-only',storage:'google-not-connected',photoEvidence:false,persisted:false},headers);
         try{await store.verify();return send(res,200,{ok:true,mode:'sample-only',storage:'google-staging',photoEvidence:false,persisted:true},headers);}
-        catch(error){return send(res,503,{ok:false,mode:'sample-only',error:'STAGING Google Sheets/Drive has not been verified'},headers);}
+        catch(error){return send(res,503,{ok:false,mode:'sample-only',error:'STAGING Google Sheets has not been verified'},headers);}
       }
       if(route==='/v1/dashboard'&&req.method==='GET'){
         return send(res,200,{ok:true,mode:'sample-only',data:{
           series:demoSeries, tanks:demoTanks, activity:demoActivity,
           dailyLak:demoDailyLak, receipts:demoReceipts, nozzleCount:6,
-          meterRecords:store ? (await store.listRecords()).slice(-20) : meters.slice(-20)
+          meterRecords:store ? (await store.listRecords()).slice(-20) : []
         }},headers);
       }
       if(route==='/v1/meters'&&req.method==='GET')
         return send(res,200,{ok:true,mode:'sample-only',storage:store?'google-staging':'memory-only',
-          records:(store?await store.listRecords():meters).slice(-50).map(({_openPhotoId,_closePhotoId,...safe})=>safe)},headers);
+          records:(store?await store.listRecords():[]).slice(-50)},headers);
       if(route==='/v1/meters'&&req.method==='POST'){
         const m=await bodyJson(req);
         const nozzle=Number(m.nozzle),nozzleSpec=NOZZLES.find(n=>n.id===nozzle);
@@ -103,16 +103,12 @@ export function createStagingServer({
           return send(res,400,{error:'Invalid nozzle/date/meter reading'},headers);
         if('image' in m || 'openPhoto' in m || 'closePhoto' in m)
           return send(res,400,{error:'Photo fields are not supported for meter records'},headers);
+        if(!store)return send(res,503,{error:'Google Sheets STAGING is not connected. No meter data was saved.'},headers);
         const saved={id:randomBytes(16).toString('hex'),nozzle,date,fuel:nozzleSpec.fuel,
           opening:quantity.opening,closing:quantity.closing,liters:quantity.liters,createdAt:new Date(clock()).toISOString()};
-        if(store){
-          const persisted=await store.saveRecord(saved);
-          return send(res,201,{ok:true,mode:'sample-only',persisted:true,storage:'google-staging',record:persisted},headers);
-        }
-        if(meters.some(x=>x.nozzle===nozzle && x.date===date))
-          return send(res,409,{error:'Staging meter for this nozzle/date already exists'},headers);
-        meters.push(saved);
-        return send(res,201,{ok:true,mode:'sample-only',persisted:false,storage:'memory-only',record:saved},headers);
+        const persisted=await store.saveRecord(saved);
+        if(!persisted||persisted.persisted!==true)return send(res,503,{error:'Google Sheets did not confirm the saved meter'},headers);
+        return send(res,201,{ok:true,mode:'sample-only',persisted:true,storage:'google-staging',record:persisted},headers);
       }
       if(route==='/v1/logout'&&req.method==='POST'){
         sessions.delete(tokenHash);

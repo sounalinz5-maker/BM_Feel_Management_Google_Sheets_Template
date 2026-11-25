@@ -73,9 +73,9 @@
 <div class="s-numbers"><label>หัวจ่าย<select id="nozzle" required style="width:100%;background:#071f39;color:white;padding:12px;border:1px solid #446887;border-radius:9px"><option value="1">1 · ดีเซล</option><option value="2">2 · ดีเซล</option><option value="3">3 · ดีเซล</option><option value="4">4 · เบนซิน</option><option value="5">5 · เบนซิน</option><option value="6">6 · เบนซิน</option></select></label><label>วันที่<input id="meterDate" type="date" required></label></div>
 <div class="s-numbers"><label>มิเตอร์เปิด<input id="meterOpen" inputmode="decimal" placeholder="100.000" required></label><label>มิเตอร์ปิด<input id="meterClose" inputmode="decimal" placeholder="102.500" required></label></div>
 <div class="s-status" id="meterCalculation">ปริมาณขาย = มิเตอร์ปิด − มิเตอร์เปิด</div>
-<div id="storageStatus" class="s-status s-warn">กำลังตรวจสอบที่จัดเก็บมิเตอร์ STAGING…</div>
-<button class="btn-primary btn-block" id="submitMeter" type="submit">บันทึกมิเตอร์ทดสอบ</button>
-</form><p><strong>ไม่ต้องแนบรูปถ่าย</strong> ถ้าเชื่อม Google Sheets STAGING สำเร็จ ระบบจะบันทึกถาวรลงชีต หากยังไม่เชื่อม จะบันทึกเฉพาะข้อมูลทดสอบชั่วคราวซึ่งอาจหายเมื่อเซิร์ฟเวอร์รีสตาร์ต ห้ามใช้ยอดจริง</p>
+<div id="storageStatus" class="s-status s-warn">กำลังตรวจสอบ Google Sheets STAGING…</div>
+<button class="btn-primary btn-block" id="submitMeter" type="submit" disabled>บันทึกมิเตอร์ทดสอบ</button>
+</form><p><strong>บันทึกลง Google Sheets STAGING เท่านั้น — ไม่ต้องแนบรูปถ่าย</strong> หากยังไม่ได้เชื่อมสิทธิ์ Google Sheets ปุ่มบันทึกจะถูกปิด เพื่อป้องกันข้อมูลสูญหายหรือเข้าใจผิดว่าเก็บถาวรแล้ว ห้ามกรอกยอดขายจริงในระบบทดสอบ</p>
 <div id="meterResult" class="s-status" role="status">ยังไม่มีรายการทดสอบ</div>
 <h3>รายการจำลองที่บันทึก</h3><div id="meterList">—</div>
 </section>
