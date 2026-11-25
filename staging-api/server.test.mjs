@@ -40,7 +40,7 @@ test('staging meter writes remain ephemeral and cannot contain photo data',async
  const bad=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'12',closing:'10'}});
  assert.equal(bad.status,400);
  const photo=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10',closing:'12',openPhoto:'image'}});
- assert.equal(photo.status,400);
+ assert.equal(photo.status,503);
  const good=await r('/v1/meters',{method:'POST',token,body:{nozzle:1,date:'2026-11-25',opening:'10.125',closing:'12.625'}});
  assert.equal(good.status,201);assert.equal(good.data.record.liters,2.5);assert.equal(good.data.persisted,false);
  const rec=await r('/v1/meters',{token});assert.equal(rec.data.records.length,1);
