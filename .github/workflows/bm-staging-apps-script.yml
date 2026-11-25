@@ -29,6 +29,8 @@ jobs:
         run: |
           node --check < Code.gs
           node --input-type=module -e "import fs from 'node:fs';const h=fs.readFileSync('Index.html','utf8');new Function(h.match(/<script>([\\s\\S]*?)<\\/script>/)[1]);const m=JSON.parse(fs.readFileSync('appsscript.json'));if(m.webapp.access!=='MYSELF'||m.webapp.executeAs!=='USER_DEPLOYING')throw Error('Unsafe manifest');"
+      - name: Run STAGING business logic tests
+        run: node --test meter.test.mjs
       - name: Install pinned clasp
         run: npm install --global @google/clasp@3.4.1
       - name: Verify isolated target
