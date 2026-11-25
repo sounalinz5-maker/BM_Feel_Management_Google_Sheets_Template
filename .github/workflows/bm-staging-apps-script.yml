@@ -1,0 +1,60 @@
+name: BM FUEL STAGING - Apps Script
+on:
+  push:
+    branches: [staging-google-apps-script-meter]
+    paths:
+      - 'staging-apps-script/**'
+      - '.github/workflows/bm-staging-apps-script.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bm-fuel-staging-apps-script
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/staging-google-apps-script-meter'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: bm-fuel-staging
+    defaults:
+      run:
+        working-directory: staging-apps-script
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate local staging code
+        run: |
+          node --check < Code.gs
+          node --input-type=module -e "import fs from 'node:fs';const h=fs.readFileSync('Index.html','utf8');new Function(h.match(/<script>([\\s\\S]*?)<\\/script>/)[1]);const m=JSON.parse(fs.readFileSync('appsscript.json'));if(m.webapp.access!=='MYSELF'||m.webapp.executeAs!=='USER_DEPLOYING')throw Error('Unsafe manifest');"
+      - name: Install pinned clasp
+        run: npm install --global @google/clasp@3.4.1
+      - name: Verify isolated target
+        id: target
+        env:
+          CLASPRC_JSON: ${{ secrets.BM_STAGING_CLASPRC_JSON }}
+          STAGING_SCRIPT_ID: ${{ secrets.BM_STAGING_SCRIPT_ID }}
+        run: |
+          test -n "$CLASPRC_JSON" && test -n "$STAGING_SCRIPT_ID" || { echo 'STAGING credentials must be configured in GitHub environment secrets.'; exit 1; }
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node verify-target.mjs
+      - name: Push approved staging files
+        run: |
+          clasp show-file-status
+          clasp push --force
+      - name: Deploy private staging web app
+        env:
+          DEPLOYMENT_ID: ${{ steps.target.outputs.deployment_id }}
+        run: |
+          if [ -n "$DEPLOYMENT_ID" ]; then
+            clasp create-deployment --deploymentId "$DEPLOYMENT_ID" --description "BM FUEL STAGING GitHub"
+          else
+            clasp create-deployment --description "BM FUEL STAGING GitHub"
+          fi
+          clasp list-deployments
+      - name: Remove runner credentials
+        if: always()
+        run: rm -f "$HOME/.clasprc.json" .clasp.json
