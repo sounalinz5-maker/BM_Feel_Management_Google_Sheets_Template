@@ -132,6 +132,6 @@ test('STAGING Google Sheets target is locked to approved ID',async()=>{
 test('fail-closed when STAGING Google credentials are only partially set',async()=>{
  const {createGoogleStagingStore}=await import('./google-storage.mjs');
  assert.throws(()=>createGoogleStagingStore({
-   BM_STAGING_GOOGLE_AUTH_JSON:'{}',BM_STAGING_SHEET_ID:'STAGINGONLY123456',BM_STAGING_DRIVE_FOLDER_ID:'STAGINGONLY123456'
+   BM_STAGING_GOOGLE_AUTH_JSON:'{}',BM_STAGING_SHEET_ID:'1OslhbqwN_CQaMEWG92Ktu7OaeJSdEigNSIe8RHry0hU'
  }),/Expected authorized_user OAuth or service_account/);
 });
