@@ -1,0 +1,30 @@
+// Run exclusively on a trusted GitHub runner with the STAGING-only OAuth credential.
+import fs from 'node:fs';
+const id=process.env.STAGING_SCRIPT_ID;
+if(!id||!/^[A-Za-z0-9_-]{20,150}$/.test(id))throw Error('Missing or invalid STAGING_SCRIPT_ID');
+const conf=JSON.parse(fs.readFileSync(process.env.HOME+'/.clasprc.json','utf8'));
+const c=conf.tokens?.default;
+if(!c?.refresh_token||!c.client_id||!c.client_secret)throw Error('Expected clasp 3.x default account credentials');
+const tokenResponse=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:c.client_id,client_secret:c.client_secret,refresh_token:c.refresh_token,grant_type:'refresh_token'})});
+if(!tokenResponse.ok)throw Error('Google authorization failed ('+tokenResponse.status+')');
+const {access_token}=await tokenResponse.json();
+if(!access_token)throw Error('No Google access token');
+const base='https://script.googleapis.com/v1/projects/'+encodeURIComponent(id);
+async function get(suffix=''){const r=await fetch(base+suffix,{headers:{Authorization:'Bearer '+access_token}});if(!r.ok)throw Error('Apps Script preflight failed ('+r.status+')');return r.json();}
+const p=await get();
+if(p.title!=='BM FUEL STAGING - GitHub' || p.parentId!=='1OslhbqwN_CQaMEWG92Ktu7OaeJSdEigNSIe8RHry0hU')throw Error('Refusing target: expected dedicated script attached to approved STAGING sheet.');
+const {files=[]}=await get('/content');
+const code=files.find(f=>f.name==='Code'&&f.type==='SERVER_JS');
+const known=code?.source?.includes('APPS_SCRIPT_STAGING_SAMPLE')&&code.source.includes('1OslhbqwN_CQaMEWG92Ktu7OaeJSdEigNSIe8RHry0hU');
+const blank=!code||/^\s*(function\s+myFunction\s*\(\s*\)\s*\{\s*\})?\s*$/.test(code.source||'');
+if(!(known||blank)||files.some(f=>!['Code','Index','appsscript'].includes(f.name))||(!known&&files.some(f=>f.name==='Index')))throw Error('Remote project contains unrecognized code. Refusing overwrite.');
+const result=await get('/deployments');
+if(result.nextPageToken)throw Error('Too many deployments; manual review needed.');
+const deployments=(result.deployments||[]).filter(d=>d.deploymentConfig?.versionNumber);
+const marker='BM FUEL STAGING GitHub';
+if(deployments.some(d=>d.deploymentConfig?.description!==marker)||deployments.length>1)throw Error('Unexpected deployment; manual review needed.');
+const existing=deployments[0]?.deploymentId||'';
+if(existing&&!/^[A-Za-z0-9_-]+$/.test(existing))throw Error('Unexpected deployment identifier');
+fs.appendFileSync(process.env.GITHUB_OUTPUT,'deployment_id='+existing+'\n');
+fs.writeFileSync('.clasp.json',JSON.stringify({scriptId:id,rootDir:'.'}),{mode:0o600});
+console.log('Verified exact STAGING spreadsheet parent, project title and remote code.');
