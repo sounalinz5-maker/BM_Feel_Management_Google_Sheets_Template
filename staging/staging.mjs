@@ -116,6 +116,8 @@ $('meterForm').addEventListener('submit',async e=>{
  }catch(error){status('meterResult','บันทึกไม่สำเร็จ: '+err(error),false);}
 });
 $('meterDate').value=today();
+const DEFAULT_STAGING_API='https://bm-fuel-staging-api-staging.up.railway.app';
 const stored=sessionStorage.getItem(API_STORAGE);
-if(stored && validApiUrl(stored)){$('apiUrl').value=stored;check();}
+$('apiUrl').value=(stored && validApiUrl(stored)) ? stored : DEFAULT_STAGING_API;
+check();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{}));
