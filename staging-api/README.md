@@ -1,0 +1,46 @@
+# BM FUEL — isolated staging API & full-screen PWA
+
+**Current state:** The interface and API implementation are committed to source. GitHub Pages hosts the **static staging UI only**. It DOES NOT host the Node.js API. Until a separate HTTPS host is configured, the login remains inaccessible, and no "connected" status should be claimed.
+
+Staging UI: https://sounalinz5-maker.github.io/BM_Feel_Management_Google_Sheets_Template/staging/
+
+## Run on a developer machine (no real Sheets or Drive)
+
+```powershell
+$env:BM_STAGING_USERNAME='staging-admin'
+$env:BM_STAGING_PASSWORD='<generate-a-strong-unique-staging-password>'
+$env:BM_STAGING_ORIGIN='http://localhost:45000'
+node staging-api/server.mjs
+```
+
+For local testing, start a static HTTP server on port 45000 to serve the repository and visit /staging/. Set API URL http://127.0.0.1:8787. HTTPS is mandatory for remote access on a phone.
+
+### Production-like staging deployment
+
+1. Deploy `staging-api/server.mjs` on an approved managed hosting service that supports Node.js, HTTPS, restricted access and secrets. Put `BM_STAGING_USERNAME` and `BM_STAGING_PASSWORD` in **the hosting service's secret/environment settings**, not public source. Set `BM_STAGING_ORIGIN=https://sounalinz5-maker.github.io`.
+2. The app listens on `PORT` and `BM_STAGING_HOST` (default 127.0.0.1; change to 0.0.0.0 only inside protected container hosting). HTTPS termination must happen at the host/reverse proxy.
+3. Open the static staging UI on Android Chrome or iPhone Safari and paste the staging API HTTPS base URL; health check must pass before a real staging login becomes available.
+4. Test endpoint `GET /v1/health`, `POST /v1/login`, `GET /v1/me`, `GET /v1/dashboard`, `POST /v1/meters`, `GET /v1/meters`, `POST /v1/logout`.
+5. Test browser CORS, denied origins, invalid credentials, lockouts, account roles, token expiry and mobile installation. Confirm no browser password persistence or tokens in URLs.
+6. Get owner review before changing production. Deploying this in memory API must never be mistaken for a real financial ledger.
+
+### Security limitations (by design)
+
+- This API uses **fictional sample data only**, stores temporary sessions and meter writes **in server memory**, and loses them when restarted. No Google Sheets ID or Drive account is used.
+- It is intended for **staging workflow tests**, not a ready production backend. Has basic login attempt throttling but not a distributed rate limiter or a production user database.
+- **Never** reuse actual user/Owner passwords in staging.
+- No camera/photo upload API is available here; uploads intentionally rejected. The earlier interface's photo/OCR can be kept in Demo until a real authenticated evidence API is designed.
+- The GitHub Pages staging frontend is public; remote access to any private data depends entirely on backend authentication, not frontend hiding.
+- Browser `sessionStorage` stores the **API origin only**, never passwords or bearer tokens. Session tokens are held in JS memory for this staging preview.
+- The old Apps Script `google.script.run` is not a browser-accessible REST endpoint. Connecting actual Sheets/Drive requires a separately authenticated backend, Apps Script owner review, and end-to-end tests on a copy of the data.
+- The previous iframe experiment is **not** a live integration. Do not weaken X-Frame-Options or enable unauthenticated Sheets writes to work around this.
+
+### Tests
+
+```bash
+node --check staging-api/server.mjs
+node --check staging/staging.mjs
+node --test staging-api/server.test.mjs
+```
+
+No environment secrets are required to run tests; the test suite uses ephemeral test-only credentials.

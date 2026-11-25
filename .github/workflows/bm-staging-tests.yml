@@ -1,0 +1,45 @@
+name: BM FUEL STAGING API and PWA tests
+on:
+  push:
+    paths:
+      - 'staging/**'
+      - 'staging-api/**'
+      - '.github/workflows/bm-staging-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check staging-api/server.mjs
+          node --check staging-api/server.test.mjs
+          node --check staging/staging.mjs
+          node --check staging/sw.js
+      - name: Test isolated authentication and demo-only API
+        run: node --test staging-api/server.test.mjs
+      - name: Validate PWA staging assets
+        run: |
+          python3 - <<'PY'
+          import pathlib,json
+          s=pathlib.Path("staging")
+          m=json.loads((s/"manifest.json").read_text())
+          assert m["display"]=="fullscreen"
+          assert m["start_url"]=="./index.html" and m["scope"]=="./"
+          html=(s/"index.html").read_text()
+          assert 'rel="manifest"' in html
+          assert 'id="apiUrl"' in html and 'id="authForm"' in html
+          assert 'id="meterForm"' in html and 'id="dashboard"' in html
+          assert 'google.script.run' not in html
+          for icon in m["icons"]:
+            data=(s/icon["src"]).resolve().read_bytes()
+            assert data.startswith(b'\x89PNG\r\n\x1a\n')
+          print("Staging static assets PASS")
+          PY
