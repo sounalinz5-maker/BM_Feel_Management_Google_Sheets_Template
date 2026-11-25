@@ -113,8 +113,9 @@ export function createStagingServer({
 }
 if(process.argv[1] && fileURLToPath(import.meta.url)===process.argv[1]){
   const server=createStagingServer();
-  // Localhost only unless deployed behind an authenticated HTTPS edge.
-  const host=process.env.BM_STAGING_HOST||'127.0.0.1';
+  // Bind to the injected hosting port; use loopback for local development.
+  // This is staging sample data only. HTTPS must terminate at the hosting provider.
+  const host=process.env.BM_STAGING_HOST||(process.env.PORT?'0.0.0.0':'127.0.0.1');
   const port=Number(process.env.PORT||8787);
   server.listen(port,host,()=>console.log('BM staging sample-only API listening on '+host+':'+port));
 }

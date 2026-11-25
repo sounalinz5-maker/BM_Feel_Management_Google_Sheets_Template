@@ -44,3 +44,18 @@ node --test staging-api/server.test.mjs
 ```
 
 No environment secrets are required to run tests; the test suite uses ephemeral test-only credentials.
+
+## Deploy from GitHub to Railway
+
+1. Install/connect the Railway app in ChatGPT or sign into Railway's dashboard. Linking this repository and confirming hosting/account billing requires the owner's action.
+2. In Railway choose **New Project → Deploy from GitHub repo**. Select `sounalinz5-maker/BM_Feel_Management_Google_Sheets_Template` and keep **root directory** as `/` (not `/staging-api`, because the server imports `/app` fixtures).
+3. Select **Add Variables before Deploy**, and configure these service secrets, **without copying real BM FUEL credentials**:
+   - `BM_STAGING_USERNAME` — a new, unique staging user ID.
+   - `BM_STAGING_PASSWORD` — a strong staging-only secret of at least 12 characters; set directly in Railway's private variables.
+   - `BM_STAGING_ORIGIN` — `https://sounalinz5-maker.github.io`.
+   Railway injects `PORT` automatically. The project root `package.json` supplies `npm start`, and the server binds to 0.0.0.0 when `PORT` is provided.
+4. Deploy, configure a Railway-generated HTTPS public domain, then verify the domain plus `/v1/health` returns `{"ok":true,"mode":"sample-only"}` before trying any login.
+5. Open `https://sounalinz5-maker.github.io/BM_Feel_Management_Google_Sheets_Template/staging/` and paste the HTTPS API base URL into the API field. Use only the new staging credentials.
+6. After testing, do not confuse sample-only API data with production Sheets/Drive. Changes to production need separate authorization.
+
+Local syntax and integration tests: `npm test`.
