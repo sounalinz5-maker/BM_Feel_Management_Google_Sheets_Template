@@ -2,6 +2,7 @@ import {meterDifference,formatLiters,formatLak,escapeHtml} from '../app/logic.mj
 const $=id=>document.getElementById(id);
 let api='',accessToken='',accessExpiry=0,busy=false;
 const API_STORAGE='BM_FUEL_STAGING_API_URL';
+const USERNAME_STORAGE='BM_FUEL_STAGING_SAVED_USERNAME';
 function validApiUrl(raw){
   try {
     const value=new URL(raw);
@@ -36,6 +37,7 @@ function today(){
 function reset(){
  accessToken='';accessExpiry=0;
  $('dashboard').hidden=true;$('meter').hidden=true;$('auth').hidden=false;
+ $('setup').hidden=true;
  $('sPassword').value='';
 }
 async function check(){
@@ -48,8 +50,10 @@ async function check(){
    if(!r.ok||r.service!=='bm-fuel-staging'||r.auth!==true)throw Error('ไม่พบ BM FUEL staging API ที่รองรับ');
    sessionStorage.setItem(API_STORAGE,api);
    status('apiStatus','เชื่อมต่อ API STAGING สำเร็จ · ข้อมูลจำลองเท่านั้น',true);
+   status('connectionHint','● ระบบทดสอบออนไลน์ · เชื่อมต่อ HTTPS สำเร็จ',true);
+   $('setup').hidden=true;
    $('auth').hidden=false;
- }catch(e){status('apiStatus','เชื่อมต่อไม่ได้: '+err(e)+' — ตรวจ URL, HTTPS, CORS และสถานะเซิร์ฟเวอร์',false);}
+ }catch(e){$('setup').hidden=false;status('apiStatus','เชื่อมต่อไม่ได้: '+err(e)+' — ตรวจ URL, HTTPS, CORS และสถานะเซิร์ฟเวอร์',false);}
 }
 function plot(series){
  const list=series.slice(-7),max=Math.max(1,...list.flatMap(x=>[Number(x.diesel)||0,Number(x.gasoline)||0]));
@@ -78,12 +82,24 @@ async function refresh(){
  }
 }
 $('checkApi').addEventListener('click',check);
+$('toggleApi').addEventListener('click',()=>{$('setup').hidden=!$('setup').hidden;});
+try{
+ const saved=localStorage.getItem(USERNAME_STORAGE)||'';
+ if(saved && saved.length<=120){$('sUsername').value=saved;$('rememberUsername').checked=true;}
+}catch{}
+$('rememberUsername').addEventListener('change',()=>{
+ if(!$('rememberUsername').checked){try{localStorage.removeItem(USERNAME_STORAGE);}catch{}}
+});
 $('authForm').addEventListener('submit',async e=>{
  e.preventDefault();if(busy)return;busy=true;status('authStatus','กำลังตรวจชื่อผู้ใช้และรหัสผ่านกับเซิร์ฟเวอร์ STAGING');
  try{
   const r=await request('/v1/login',{method:'POST',token:'',body:{username:$('sUsername').value.trim(),password:$('sPassword').value}});
   if(!r.ok||!/^[a-f0-9]{64}$/i.test(r.accessToken))throw Error('ข้อมูล Session ไม่ถูกต้อง');
   accessToken=r.accessToken;accessExpiry=Date.now()+r.expiresIn*1000;
+  try{
+    if($('rememberUsername').checked)localStorage.setItem(USERNAME_STORAGE,$('sUsername').value.trim());
+    else localStorage.removeItem(USERNAME_STORAGE);
+  }catch{}
   $('sPassword').value='';
   $('auth').hidden=true;$('dashboard').hidden=false;$('meter').hidden=false;
   $('welcome').textContent='ยินดีต้อนรับ '+(r.user.displayName||'STAGING')+' · สถานะ '+r.user.role;

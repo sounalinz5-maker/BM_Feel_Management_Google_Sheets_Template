@@ -29,6 +29,16 @@
 .s-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .s-table{width:100%;border-collapse:collapse;font-size:12px}.s-table th,.s-table td{border-bottom:1px solid #3b5a77;padding:8px 3px;text-align:left}
 .s-table th{color:#a9c6e0}
+.auth-eyebrow{font-size:11px;color:#ffbd71;font-weight:850;letter-spacing:.14em;margin-bottom:8px}
+.auth-intro{font-size:13px;color:#bdd2e7;line-height:1.55}
+#auth{border-color:#5d7185;box-shadow:0 14px 45px #0004}
+#auth h2{font-size:25px;margin:6px 0 10px}
+#auth .btn-primary{margin-top:17px}
+.s-connection{font-size:11px;color:#b2eac4;padding:9px 0 0}
+.remember-line{display:flex!important;align-items:center;gap:9px;cursor:pointer;margin:17px 0 3px!important;font-size:13px!important}
+.remember-line input{width:19px!important;height:19px;flex:none;accent-color:#ff9c2b;display:inline-block!important;margin:0!important}
+.remember-line span{font-weight:500}
+.s-settings-toggle{font-size:12px;border:0;background:transparent;color:#a7bfda;text-decoration:underline;cursor:pointer;margin:0 auto;display:block;padding:15px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -36,18 +46,18 @@
 <header class="s-head"><div class="s-brand"><span>⛽</span><div>BM FUEL <span style="color:#ffa64c">STAGING</span><small>Fullscreen PWA · ระบบทดสอบข้อมูลตัวอย่าง</small></div></div></header>
 <main class="s-body">
 <div class="s-note"><strong>ข้อมูลตัวอย่างเท่านั้น</strong> — หน้านี้ไม่เชื่อม Google Sheets/Drive จริง และไม่ควรกรอกบัญชีหรือรหัสผ่านของระบบจริง</div>
-<section id="setup" class="s-card"><h2>1. เชื่อม API ทดสอบผ่าน HTTPS</h2>
+<section id="setup" class="s-card" hidden><h2>1. เชื่อม API ทดสอบผ่าน HTTPS</h2>
 <p>เมื่อมี API STAGING เปิดใช้งานแล้ว ให้ใส่ลิงก์ HTTPS ที่ได้รับจากผู้ดูแลระบบ ไม่ใช่ลิงก์ Apps Script เดิม</p>
 <label for="apiUrl">ลิงก์ API STAGING</label><input id="apiUrl" type="url" placeholder="https://your-staging-api.example.com" spellcheck="false" autocapitalize="off">
 <button type="button" class="btn-outline btn-block" id="checkApi">ตรวจสอบการเชื่อมต่อ STAGING</button>
 <div id="apiStatus" class="s-status" role="status">ยังไม่ได้เชื่อมต่อ API</div>
 <p>หากยังไม่มีลิงก์ API แสดงว่าเซิร์ฟเวอร์ STAGING ยังไม่ถูก Deploy และไม่สามารถล็อกอินจริงได้</p>
 </section>
-<section id="auth" class="s-card" hidden><h2>2. เข้าสู่ระบบทดสอบ</h2>
+<section id="auth" class="s-card" hidden><div class="auth-eyebrow">SECURE STAGING LOGIN</div><h2>ยินดีต้อนรับสู่ BM FUEL</h2><p class="auth-intro">เข้าสู่ระบบเพื่อจัดการและทดสอบข้อมูลปั๊มน้ำมันผ่านแอปเต็มจอ</p><div id="connectionHint" class="s-connection" role="status">กำลังตรวจสอบ API ทดสอบ…</div>
 <form id="authForm" autocomplete="off">
-<label for="sUsername">ชื่อผู้ใช้ทดสอบ</label><input id="sUsername" autocomplete="off" required maxlength="120">
-<label for="sPassword">รหัสผ่านทดสอบ</label><input id="sPassword" type="password" autocomplete="off" required>
-<button type="submit" class="btn-primary btn-block">ล็อกอิน STAGING</button>
+<label for="sUsername">ชื่อผู้ใช้</label><input id="sUsername" autocomplete="username" autocapitalize="off" spellcheck="false" required maxlength="120">
+<label for="sPassword">รหัสผ่าน</label><input id="sPassword" type="password" autocomplete="current-password" required>
+<label class="remember-line" for="rememberUsername"><input type="checkbox" id="rememberUsername"><span>จดจำชื่อผู้ใช้บนอุปกรณ์นี้</span></label><p class="s-mini">บันทึกเฉพาะชื่อผู้ใช้ ไม่บันทึกรหัสผ่าน</p><button type="submit" class="btn-primary btn-block">เข้าสู่ระบบ BM FUEL</button>
 </form><p>สร้างบัญชีทดสอบจากตัวแปรสภาพแวดล้อมบนเซิร์ฟเวอร์เท่านั้น ห้ามใช้รหัสจริงของ Owner</p><div id="authStatus" class="s-status" role="status">รอตรวจสอบบัญชีทดสอบ</div>
 </section>
 <section id="dashboard" class="s-card" hidden><div class="s-row"><h2>Dashboard ตัวอย่าง</h2><span class="s-pill">API STAGING</span></div>
@@ -67,6 +77,6 @@
 <div id="meterResult" class="s-status" role="status">ยังไม่มีรายการทดสอบ</div>
 <h3>รายการจำลองที่บันทึก</h3><div id="meterList">—</div>
 </section>
-<p class="s-mini" style="text-align:center;margin-top:22px">© BM FUEL Management · Staging Only · ไม่ใช่ระบบ Production</p>
+<button type="button" id="toggleApi" class="s-settings-toggle">⚙ การตั้งค่า API สำหรับทดสอบ</button><p class="s-mini" style="text-align:center;margin-top:6px">© BM FUEL Management · Staging Only · ไม่ใช่ระบบ Production</p>
 </main></div>
 <script type="module" src="./staging.mjs"></script></body></html>
