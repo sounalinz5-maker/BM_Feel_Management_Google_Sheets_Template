@@ -1,6 +1,7 @@
 import {meterDifference,formatLiters,formatLak,escapeHtml} from '../app/logic.mjs';
 const $=id=>document.getElementById(id);
-let api='',accessToken='',accessExpiry=0,busy=false;
+let api='',accessToken='',accessExpiry=0,busy=false,googleStorageReady=false;
+const photoPreviewUrls={open:null,close:null};
 const API_STORAGE='BM_FUEL_STAGING_API_URL';
 const USERNAME_STORAGE='BM_FUEL_STAGING_SAVED_USERNAME';
 function validApiUrl(raw){
@@ -37,6 +38,8 @@ function today(){
 function reset(){
  accessToken='';accessExpiry=0;
  $('dashboard').hidden=true;$('meter').hidden=true;$('auth').hidden=false;
+ googleStorageReady=false;
+ $('submitMeter').disabled=true;
  $('setup').hidden=true;
  $('sPassword').value='';
 }
@@ -74,8 +77,11 @@ async function refresh(){
   $('tankGasoline').textContent=formatLiters(d.tanks.gasoline);
   plot(d.series);
   const meters=await request('/v1/meters');
-  $('meterList').innerHTML=meters.records.length?meters.records.slice().reverse().map(item=>
-    '<div class="s-row"><span>หัว '+escapeHtml(item.nozzle)+' · '+escapeHtml(item.date)+'</span><strong>'+formatLiters(item.liters)+' ลิตร</strong></div>').join(''):'ไม่มีรายการทดสอบ';
+  const records=Array.isArray(meters.records)?meters.records:[];
+  $('meterList').innerHTML=records.length?records.slice().reverse().map(item=>
+    '<div class="s-row"><span>หัว '+escapeHtml(item.nozzle)+' · '+escapeHtml(item.date)+
+    (item.hasOpenPhoto&&item.hasClosePhoto?' <small>📷 2 รูป</small>':'')+'</span><strong>'+
+    formatLiters(item.liters)+' ลิตร</strong></div>').join(''):'ไม่มีรายการทดสอบ';
  }catch(e){
   status('meterResult','โหลดข้อมูลไม่ได้: '+err(e),false);
   if(String(e.message||'').match(/Session expired|missing|401/))reset();
@@ -104,6 +110,7 @@ $('authForm').addEventListener('submit',async e=>{
   $('auth').hidden=true;$('dashboard').hidden=false;$('meter').hidden=false;
   $('welcome').textContent='ยินดีต้อนรับ '+(r.user.displayName||'STAGING')+' · สถานะ '+r.user.role;
   await refresh();
+  await checkStagingStorage();
  }catch(error){status('authStatus','เข้าสู่ระบบไม่สำเร็จ: '+err(error),false);}
  finally{busy=false;}
 });
@@ -112,6 +119,61 @@ $('logout').addEventListener('click',async()=>{
  try{await request('/v1/logout',{method:'POST'});}catch{}
  reset();status('authStatus','ออกจากระบบ STAGING แล้ว',true);
 });
+async function checkStagingStorage(){
+  googleStorageReady=false;
+  $('submitMeter').disabled=true;
+  status('storageStatus','กำลังตรวจสอบ Google Sheets และ Drive ของ STAGING…');
+  try{
+    const data=await request('/v1/storage-status');
+    if(data.storage==='google-staging' && data.persisted===true && data.photoEvidence===true){
+      googleStorageReady=true;
+      $('submitMeter').disabled=false;
+      status('storageStatus','● พร้อมบันทึกถาวรลง Google Sheets และ Drive เฉพาะ STAGING',true);
+    }else{
+      status('storageStatus','ยังไม่เชื่อม Google Sheets/Drive ของ STAGING — ปิดการบันทึกพร้อมรูปถ่ายเพื่อป้องกันข้อมูลหาย',false);
+    }
+  }catch(e){status('storageStatus','ตรวจสอบที่เก็บ STAGING ไม่สำเร็จ: '+err(e),false);}
+}
+function readAndPreparePhoto(file){
+ return new Promise((resolve,reject)=>{
+   if(!file){reject(new Error('กรุณาถ่ายรูปมิเตอร์เปิดและปิดให้ครบ'));return;}
+   if(!file.type.startsWith('image/')){reject(new Error('ไฟล์รูปภาพไม่ถูกต้อง'));return;}
+   if(file.size>12*1024*1024){reject(new Error('รูปภาพต้นฉบับต้องไม่เกิน 12MB'));return;}
+   const image=new Image(),url=URL.createObjectURL(file);
+   image.onload=()=>{
+     try{
+       const maxSide=1280,scale=Math.min(1,maxSide/Math.max(image.naturalWidth,image.naturalHeight));
+       const canvas=document.createElement('canvas');
+       canvas.width=Math.round(image.naturalWidth*scale);canvas.height=Math.round(image.naturalHeight*scale);
+       if(!canvas.width||!canvas.height)throw new Error('ขนาดภาพไม่ถูกต้อง');
+       const ctx=canvas.getContext('2d');
+       ctx.drawImage(image,0,0,canvas.width,canvas.height);
+       let result;
+       for(const quality of [0.77,0.65,0.5,0.4]){
+         result=canvas.toDataURL('image/jpeg',quality);
+         if(result.length<830000)break;
+       }
+       if(!result||result.length>=830000)throw new Error('รูปภาพมีขนาดใหญ่เกินไป กรุณาถ่ายรูปใหม่');
+       resolve(result);
+     }catch(error){reject(error);}finally{URL.revokeObjectURL(url);}
+   };
+   image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('เปิดรูปภาพนี้ไม่ได้'));};
+   image.src=url;
+ });
+}
+function setupPreview(inputId,previewId,key){
+ $(inputId).addEventListener('change',()=>{
+   const previous=photoPreviewUrls[key];
+   if(previous)URL.revokeObjectURL(previous);
+   const file=$(inputId).files?.[0];
+   photoPreviewUrls[key]=file?URL.createObjectURL(file):null;
+   $(previewId).hidden=!file;
+   if(file)$(previewId).src=photoPreviewUrls[key];
+   else $(previewId).removeAttribute('src');
+ });
+}
+setupPreview('photoOpen','previewOpen','open');
+setupPreview('photoClose','previewClose','close');
 function meterCalc(){
  const result=meterDifference($('meterOpen').value,$('meterClose').value);
  status('meterCalculation',result.ok?'จำนวนลิตรขาย '+formatLiters(result.liters)+' ลิตร':result.error,result.ok?true:null);
@@ -120,16 +182,34 @@ $('meterOpen').addEventListener('input',meterCalc);
 $('meterClose').addEventListener('input',meterCalc);
 $('meterForm').addEventListener('submit',async e=>{
  e.preventDefault();
+ if(!googleStorageReady){status('meterResult','ยังไม่ได้ตั้งค่า Google Sheets และ Drive ของ STAGING จึงไม่สามารถบันทึกพร้อมรูปได้',false);return;}
  const calculation=meterDifference($('meterOpen').value,$('meterClose').value);
  if(!calculation.ok){status('meterResult',calculation.error,false);return;}
- if(!window.confirm('ยืนยันส่งข้อมูลตัวอย่างไป STAGING เท่านั้น? ไม่มีการบันทึกเข้า Google Sheets จริง'))return;
+ if(!$('photoOpen').files?.[0]||!$('photoClose').files?.[0]){
+  status('meterResult','กรุณาถ่ายรูปมิเตอร์เปิดและปิดให้ครบสองรูปก่อนบันทึก',false);return;
+ }
+ if(!window.confirm('บันทึกมิเตอร์และรูปถ่ายเข้า Google Sheets/Drive สำหรับ STAGING เท่านั้น?'))return;
+ if(busy)return;busy=true;$('submitMeter').disabled=true;
  try{
+  status('meterResult','กำลังเตรียมรูปถ่ายและส่งไปยัง STAGING…');
+  const [openPhoto,closePhoto]=await Promise.all([
+    readAndPreparePhoto($('photoOpen').files[0]),readAndPreparePhoto($('photoClose').files[0])
+  ]);
   const r=await request('/v1/meters',{method:'POST',body:{
-   nozzle:Number($('nozzle').value),date:$('meterDate').value,opening:calculation.opening,closing:calculation.closing
+   nozzle:Number($('nozzle').value),date:$('meterDate').value,
+   opening:calculation.opening,closing:calculation.closing,openPhoto,closePhoto
   }});
-  status('meterResult','บันทึกข้อมูลตัวอย่างหัว '+r.record.nozzle+' จำนวน '+formatLiters(r.record.liters)+' ลิตร (ไม่บันทึกลง Sheets)',true);
+  if(r.persisted!==true||!r.record.hasOpenPhoto||!r.record.hasClosePhoto)
+    throw new Error('ไม่พบหลักฐานยืนยันว่าบันทึกข้อมูลและรูปถาวร');
+  status('meterResult','บันทึก STAGING สำเร็จ: หัว '+r.record.nozzle+' · '+formatLiters(r.record.liters)+' ลิตร · พร้อมรูปสองภาพ',true);
+  $('meterForm').reset();$('meterDate').value=today();
+  for(const [key,id] of [['open','previewOpen'],['close','previewClose']]){
+    if(photoPreviewUrls[key])URL.revokeObjectURL(photoPreviewUrls[key]);
+    photoPreviewUrls[key]=null;$(id).hidden=true;$(id).removeAttribute('src');
+  }
   await refresh();
  }catch(error){status('meterResult','บันทึกไม่สำเร็จ: '+err(error),false);}
+ finally{busy=false;$('submitMeter').disabled=!googleStorageReady;}
 });
 $('meterDate').value=today();
 const DEFAULT_STAGING_API='https://bm-fuel-staging-api-staging.up.railway.app';

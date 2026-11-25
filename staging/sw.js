@@ -1,4 +1,4 @@
-const CACHE="bm-fuel-staging-shell-v3";
+const CACHE="bm-fuel-staging-shell-v4";
 const CORE=["./","./index.html","./staging.mjs","./manifest.json","../app/styles.css"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith("bm-fuel-staging-shell-")&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()])));

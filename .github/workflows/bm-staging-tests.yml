@@ -19,6 +19,7 @@ jobs:
           node-version: '22'
       - name: Syntax check
         run: |
+          node --check staging-api/google-storage.mjs
           node --check staging-api/server.mjs
           node --check staging-api/server.test.mjs
           node --check staging/staging.mjs

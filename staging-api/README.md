@@ -59,3 +59,22 @@ No environment secrets are required to run tests; the test suite uses ephemeral 
 6. After testing, do not confuse sample-only API data with production Sheets/Drive. Changes to production need separate authorization.
 
 Local syntax and integration tests: `npm test`.
+
+## Connecting an isolated Google Sheets and Drive **STAGING** account
+
+**Not connected yet.** The photo submit button is disabled unless a separate staging spreadsheet and staging Drive folder have been verified by the backend. Never substitute production IDs, even temporarily.
+
+1. In a **separate staging Google account**, create a blank spreadsheet named **`BM FUEL STAGING`** and a dedicated Drive folder named **`BM-FUEL-STAGING`**. Create a tab called **`Meter_Log`**; the backend initializes its column headers if row one is empty.
+2. Obtain OAuth credentials using a dedicated staging Google Cloud OAuth client with the Sheets and Drive scopes, or a service account specifically granted access to **these two resources only**. Never use credentials or a broad-scoped service account already serving production. Do not upload the credentials JSON to GitHub or the ChatGPT conversation.
+3. In the Railway service `bm-fuel-staging-api` → Variables (environment: `staging`), configure these **secret** values:
+   - `BM_STAGING_GOOGLE_AUTH_JSON`: a complete `authorized_user` OAuth JSON containing refresh token/client ID/client secret **or** a service account JSON with private key. Keep this on the private Railway environment only.
+   - `BM_STAGING_SHEET_ID`: ID of **only** the newly created STAGING spreadsheet.
+   - `BM_STAGING_DRIVE_FOLDER_ID`: ID of **only** the newly created STAGING folder.
+4. Trigger a staging deployment after variables are set. The API refuses to start if only some of the three variables exist. The authenticated `GET /v1/storage-status` verifies spreadsheet name, worksheet name, folder type/name and header structure before enabling the photo form.
+5. Test one sample submission for each of the six nozzles, each with two distinct photographed meter readings. Open the staging spreadsheet and Drive folder **directly** to check that all six rows and twelve pictures exist.
+6. Record the restart test: redeploy the Railway STAGING service and confirm all six rows remain in the STAGING spreadsheet. Confirm photo API retrieval is authorized and that folder files are private.
+7. Only after these checks can the sample-only staging workflow be deemed persistent. A separate Owner authorization is required before any production use.
+
+**Photo safeguards:** browser canvas encodes each picture as JPEG (max 650KB per photo), server validates image markers and size, and uploads stay server-side. Photo IDs are not returned to unauthenticated clients. The app prohibits photo submissions when Google staging storage is not configured; older numeric-only ephemeral API submissions remain for development compatibility and must never be used to track real sales. Google Drive upload and Sheet append are separate requests (not a distributed transaction); exceptional mid-request failures can require manual reconciliation in the staging folder.
+
+The staging credential service account, if used, must have a suitable Drive upload quota (for some Google accounts a user OAuth token or Shared Drive is necessary). User consent and Google API enablement are required; connecting the Google Drive plugin to ChatGPT does not by itself confer API tokens on Railway.
